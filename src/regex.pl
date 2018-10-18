@@ -13,6 +13,23 @@ Its role is to relate strings to (abstract syntax trees, error list) tuples.
 @license MIT
 */
 
+%! string_ast(+Regex:string, -Root_Ast_Node, -Errors:list) is semidet.
+%! string_ast(-Regex:string, +Root_Ast_Node, -Errors:list) is semidet.
+%
+%   Relates a strint to root abstract syntax tree term and a list of errors.A
+%
+%   @arg Regex This is is the string representation of the regular expression
+%   @arg Root_Ast_Node This is the ast_* node representation of the regular expression, modulo errors
+%   @arg Errors List of errors (reasons) why string, root are not the same. 
+string_ast(String, Root_Node, Errors) :- 
+  % We use the atom-as-char, let swipl deal with specifics
+  % So this takes string, relates it to a list of chars / their positon
+  string_chars(String, Chars), 
+  enumeration(Chars, Enumerated_Chars),
+ 
+  % Here we relate the list of chars to the grammer
+  phrase(gram_expr(Root_Node, Errors), Enumerated_Chars).
+
 gram_expr(Ast_Node, Errors) --> gram_or(Ast_Node, Errors).
 
 gram_or(Ast_Node, Errors) --> gram_concat(Ast_Node, Errors).
@@ -43,23 +60,6 @@ gram_single(Ast_Node, All_Errors) -->
     append(Errors, [error("No closing parenthesis"), some(Pos)], All_Errors)
   }.
 
-%! string_ast(+Regex:string, -Root_Ast_Node, -Errors:list) is semidet.
-%! string_ast(-Regex:string, +Root_Ast_Node, -Errors:list) is semidet.
-%
-%   Relates a strint to root abstract syntax tree term and a list of errors.A
-%
-%   @arg Regex This is is the string representation of the regular expression
-%   @arg Root_Ast_Node This is the ast_* node representation of the regular expression, modulo errors
-%   @arg Errors List of errors (reasons) why string, root are not the same. 
-string_ast(String, Root_Node, Errors) :- 
-  % We use the atom-as-char, let swipl deal with specifics
-  % So this takes string, relates it to a list of chars / their positon
-  string_chars(String, Chars), 
-  enumeration(Chars, Enumerated_Chars),
- 
-  % Here we relate the list of chars to the grammer
-  phrase(gram_expr(Root_Node, Errors), Enumerated_Chars).
-
 /*
 ast_occurance --> ast_single, ['{'], maybe_int(_),  [','], maybe_int(_), ['}'].
 
@@ -82,6 +82,7 @@ digit(D) -->
   [D],
   { char_type(D, digit)}.
 
+%! char(C).
 char('a').
 char('b').
 char('c').

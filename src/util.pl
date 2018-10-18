@@ -40,5 +40,4 @@ print_error(Input, error(Message, some(Pos))) :-
 enumeration([], []).
 enumeration(Ls, Es) :- enumerate_r(Ls, Es, 0).
 enumeration_r([], [], _).
-enumerate_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumerate_r(Ls, Es, N).
-
+enumeration_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumerate_r(Ls, Es, N).
