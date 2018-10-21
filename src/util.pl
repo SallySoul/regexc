@@ -5,7 +5,7 @@
     enumeration/2
   ]).
 
-/* <module> util
+/** <module> util
 
 This module contains some helpful predicates that can be shared / don't belong anywhere else
 
@@ -38,6 +38,6 @@ print_error(Input, error(Message, some(Pos))) :-
 %
 % This relates a list to a list of tuples with the element and their index.
 enumeration([], []).
-enumeration(Ls, Es) :- enumerate_r(Ls, Es, 0).
+enumeration(Ls, Es) :- enumeration_r(Ls, Es, 0).
 enumeration_r([], [], _).
-enumeration_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumerate_r(Ls, Es, N).
+enumeration_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumeration_r(Ls, Es, N).

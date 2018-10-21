@@ -3,7 +3,7 @@
     string_ast/3
   ]).
 
-/* <module> regex
+/** <module> regex
 
 This module contains the grammars relating to regular expressions.
 
@@ -25,7 +25,7 @@ string_ast(String, Root_Node, Errors) :-
   % We use the atom-as-char, let swipl deal with specifics
   % So this takes string, relates it to a list of chars / their positon
   string_chars(String, Chars), 
-  enumeration(Chars, Enumerated_Chars),
+  util:enumeration(Chars, Enumerated_Chars),
  
   % Here we relate the list of chars to the grammer
   phrase(gram_expr(Root_Node, Errors), Enumerated_Chars).
@@ -39,6 +39,7 @@ gram_or(ast_or(Ast_Node1, Ast_Node2), All_Errors) -->
   gram_concat(Ast_Node2, Errors2),
   { append(Errors1, Errors2, All_Errors)}.
 
+gram_concat(Ast_Node, Errors) --> gram_occurance(Ast_Node, Errors).
 gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) --> 
   gram_occurance(Ast_Node1, Errors1), 
   gram_concat(Ast_Node2, Errors2),
