@@ -43,6 +43,21 @@ true.
 
 If you are adding a new module, please add it to `src/load.pl`.
 
+## Future Work
+
+* I have not found a good solution for source formatting. There are some promising avenues however.
+
+	- [package-indent](https://github.com/SWI-Prolog/packages-indent/blob/master/indent.pl) is written by
+Jan Wielemaker himself. Initially, I found that it did not produce the expected results (removed
+lines for example). However I was likely holding it wrong, did not have well made code.
+
+	- [vcs-prolog](https://github.com/arthwang/vsc-prolog) is a VS Code plugin that provides, among
+other things, prolog source formatting. It is much newer than package-indent, and was also a supervised
+by Jan Wielmaker.
+
+* I have not found a good testing pattern. I really want to be able to run `make test` and see something like
+`n/n test are successful`!
+
 ## Sources
 
 I found this project to be a useful example of many prolog techniques.
