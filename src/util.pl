@@ -22,7 +22,7 @@ This module contains some helpful predicates that can be shared / don't belong a
 print_errors(_, []).
 print_errors(Input, [Error|Rest_Of_Errors]) :-
   print_error(Input, Error),
-  print_errors(Rest_Of_Errors).
+  print_errors(Input, Rest_Of_Errors).
 
 
 %! print_errors(+Input:string, +Error:list) is det. 
