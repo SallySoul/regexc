@@ -1,14 +1,14 @@
 # regexc
 
-## Intro
+## Introduction
 
-regexc is a regular expression compiler. It takes a regular expression as input and creates a binary
-that matches that regular expression.
+regexc is a regular expression compiler. It takes a regular expression as input and creates a binary,
+that matches that regular expression, as output.
 
 My goal for this project was to explore using prolog in a practical setting. That means understanding
-things like developer workflow, project layout, and argument parsing.Althought the use of the this 
-project is a bit contrived, I hope that it can serve as an accessable example of what a practical 
-prolog application might look like.
+things like developer workflow, project layout, and argument parsing. Although the use of the this 
+project is a bit contrived, I hope that it can serve as an accessable example of for what the source
+of a practical prolog application might look like.
 
 ## For Developers
 
@@ -59,6 +59,10 @@ modeled after python's own opt parse. These modules provides the minimum of what
 an argument parsing library in any language: one specification can be used to both generate a help 
 message and check the list of inputs to the tool.
 
+### Testing
+
+SWI Prolog includes a unit test package, [plunit](http://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/plunit.html%27).
+
 ## Future Work
 
 * I have not found a good solution for source formatting. There are some promising avenues however.
@@ -78,6 +82,7 @@ by Jan Wielmaker.
 	... blah blah ...
 	n/n test are successful!
 	```
+
 * I had trouble with the optparse module. The trouble was not unique to that module, however. The
 issue I faced was the the specification is a very specific kind of structure. Any goals that 
 expected that structure would simply fail if it did not meet match the expectations. In this case

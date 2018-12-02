@@ -39,9 +39,9 @@ ast_nfa(Root_Node, NFA) :-
   Partial_NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions),
 
   % We use ast_nfa_r to recursivley build the NFA from the AST
-  % Each recurrence refers to a nfa that is composed of a subset of the
-  % partial NFA. Each sub-NFA can be refered to by a starting state,
-  % and an ending state
+  % Each recurrence returns an nfa (a sub nfa, if you will) that 
+  % is composed of a subset of the partial NFA. Each sub-NFA can 
+  % be refered to by a starting state, and an ending state
   Sub_NFA = (Start_State, Final_State),
 
   % Start our recursive construction
@@ -50,6 +50,14 @@ ast_nfa(Root_Node, NFA) :-
   % Create the final states set, and we have our finished NFA
   add_nb_set(Final_State, NFA_Final_States),
   NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States).
+
+
+%
+% The following are ast_char_r definitions for each ast node type
+% I attempt to document the goal including a ASCII diagram of the 
+% resulting state machine. For example: 
+% A -- x --> B
+% This reads, from state A, transition to State B on input x
 
 %
 % ast_char(X)
@@ -73,13 +81,53 @@ ast_nfa_r(
   add_nb_set((State_Start, X, State_Final), NFA_Transitions ),
 
   Next_Index is Current_Index + 1.
-/*
+
+%
+% ast_wildcard
+% state(N) -- wildcard --> state(N+1)
+%
 ast_nfa_r(
-	ast_occurance(N, Min, Max),
-	Partial_NFA,
-	Current_Index,
-	Next_Index,
-	(State_Start, State_Final),
+  ast_wildcard,
+  Partial_NFA,
+  Current_Index,
+  Next_Index,
+  (State_Start, State_Final)
 ) :-
-	Partial_NFA = (NFA_States, NFA_Transitions, _),
+  Partial_NFA = (NFA_States, NFA_Transitions, _),
+
+  State_Start = state(Current_Index),
+  Next_Index_1 is Current_Index + 1,
+  State_Final = state(Next_Index_1),
+
+  add_nb_set(State_Start, NFA_States),
+  add_nb_set(State_Final, NFA_States),
+  add_nb_set((State_Start, wildcard, State_Final), NFA_Transitions ),
+
+  Next_Index is Current_Index + 1.
+
+
+/*
+%
+% ast_occurance(Ast_Node, none, none)
+% state
+%
+ast_nfa_r(
+  ast_wildcard,
+  Partial_NFA,
+  Current_Index,
+  Next_Index,
+  (State_Start, State_Final)
+) :-
+  Partial_NFA = (NFA_States, NFA_Transitions, _),
+
+  State_Start = state(Current_Index),
+  Next_Index_1 is Current_Index + 1,
+  State_Final = state(Next_Index_1),
+
+  add_nb_set(State_Start, NFA_States),
+  add_nb_set(State_Final, NFA_States),
+  add_nb_set((State_Start, wildcard, State_Final), NFA_Transitions ),
+
+  Next_Index is Current_Index + 1.
+
 */
