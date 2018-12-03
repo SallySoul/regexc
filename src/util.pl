@@ -41,3 +41,10 @@ enumeration([], []).
 enumeration(Ls, Es) :- enumeration_r(Ls, Es, 0).
 enumeration_r([], [], _).
 enumeration_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumeration_r(Ls, Es, N).
+
+:- begin_tests(util).
+
+test(enumeration_1) :- 
+  enumeration([3, 2, 1], [(3, 0), (2, 1), (1, 2)]).
+
+:- end_tests(util).

@@ -63,6 +63,11 @@ message and check the list of inputs to the tool.
 
 SWI Prolog includes a unit test package, [plunit](http://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/plunit.html%27).
 
+For now, the best option is consulting the load file and running
+```
+?- show_coverage(run_tests).
+```
+
 ## Future Work
 
 * I have not found a good solution for source formatting. There are some promising avenues however.

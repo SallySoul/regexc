@@ -50,15 +50,21 @@ gram_occurance(Ast_Node, Errors) --> gram_single(Ast_Node, Errors).
 gram_occurance(ast_occurance(Ast_Node, none, none), Errors) --> gram_single(Ast_Node, Errors), [('*', _)].
 gram_occurance(ast_occurance(Ast_Node, none, 1), Errors) --> gram_single(Ast_Node, Errors), [('?', _)].
 gram_occurance(ast_occurance(Ast_Node, 1, none), Errors) --> gram_single(Ast_Node, Errors), [('+', _)].
+% TODO define how to parse Expr{3, 5}
 
 gram_single(ast_char(X), []) --> [ (X, _) ], { char(X) }.
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
 gram_single(Ast_Node, Errors) --> [('(', _)], gram_expr(Ast_Node, Errors), [(')', _)].
 gram_single(Ast_Node, All_Errors) --> 
   [('(', Pos)], 
-  gram_expr(Ast_Node, Errors),
+  gram_expr(Ast_Node, Errors), ! ,
   {
     append(Errors, [error("No closing parenthesis"), some(Pos)], All_Errors)
+  }.
+gram_single(ast_error, All_Errors) --> 
+  [('(', Pos)], !, 
+  {
+    All_Errors = [error("No closing parenthesis"), some(Pos)]
   }.
 
 /*
@@ -72,13 +78,13 @@ integer(I) -->
   digits(D),
   { number_chars(I, [D0|D]}.
 */
-
+/*
 digits([D|T]) -->
   digit(D), !,
   digits(T).
 digits([]) -->
   [].
-
+*/
 digit(D) -->
   [D],
   { char_type(D, digit)}.
@@ -88,3 +94,87 @@ char('a').
 char('b').
 char('c').
 
+:- begin_tests(regex).
+
+% A correct string has a 1-1 relationship with some Ast
+test_correct_string(Correct_String, Ast) :- 
+  % There are no errors
+  Errors = [],
+  bagof(Possible_Ast, string_ast(Correct_String, Possible_Ast, Errors), Asts),
+  % There is only one Ast. 
+  % TODO: I think maybe there shouldn't be any choice points here?
+  % I think pltest has the easy facility to test a deterministic function
+  Asts = [Ast].
+
+% An incorrection sting will have some ast artifact, and a non-emtpy list of errors.
+test_incorrect_string(Incorrect_String, Ast, Errors) :-
+  bagof(
+    (Possible_Ast, Possible_Errors), 
+    string_ast(Incorrect_String, Possible_Ast, Possible_Errors), 
+    Outputs
+  ),
+  % There should still only be one possible interpretation of the input string.
+  % I think.
+  Outputs = [(Ast, Errors)].
+
+test(correct_strings) :- 
+  Correct_Strings= [
+    (
+      "a", 
+      ast_char(a)),
+    (
+      "b", 
+      ast_char(b)),
+    (
+      ".", 
+      ast_wildcard
+    ),
+    (
+      "a|b", 
+      ast_or(ast_char(a), ast_char(b))
+    ),
+    (
+      "a*", 
+      ast_occurance(ast_char(a), none, none)
+    ),
+    (
+      "a?", 
+      ast_occurance(ast_char(a), none, 1)
+    ),
+    (
+      "a+", 
+      ast_occurance(ast_char(a), 1, none)
+    ),
+    (
+      "ab", 
+      ast_concat(ast_char(a), ast_char(b))
+    ),
+    (
+      "ab|bc", 
+      ast_or(ast_concat(ast_char(a), ast_char(b)), ast_concat(ast_char(b), ast_char(c)))
+    ),
+    (
+      "(ab)*", 
+      ast_occurance(ast_concat(ast_char(a), ast_char(b)), none, none)
+    )
+  ],
+  forall(member((Correct_Input, Correct_Output), Correct_Strings),
+         assertion(test_correct_string(Correct_Input, Correct_Output))).
+
+  test(incorrect_strings) :- 
+    Incorrect_Strings = [
+      (
+        "(",
+        ast_error,
+        [error("No closing parenthesis"), some(0)]
+      ),
+      (
+        "(a",
+        ast_char(a),
+        [error("No closing parenthesis"), some(0)]
+      )
+  ],
+  forall(member((Incorrect_Input, Matching_Ast, Matching_Errors), Incorrect_Strings),
+         assertion(test_incorrect_string(Incorrect_Input, Matching_Ast, Matching_Errors))).
+
+:- end_tests(regex).
