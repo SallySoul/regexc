@@ -26,19 +26,12 @@ cd src
 swipl -f documentation_server.pl
 ```
 
-While working on the source code, I recomend starting a SWI-Prolog session with that consults all
-the files int the `src` directory. Whenever you want to consult your changes, run
-[make/0](http://www.swi-prolog.org/pldoc/doc_for?object=make/0).
+While working on the source code, I recomend starting a SWI-Prolog session with that consults the load module.
+Whenever you want to consult your changes, run [make/0](http://www.swi-prolog.org/pldoc/doc_for?object=make/0).
 
 ```
-$ swipl -f src/*
-Welcome to SWI-Prolog (threaded, 64 bits, version 7.6.4)
-SWI-Prolog comes with ABSOLUTELY NO WARRANTY. This is free software.
-Please run ?- license. for legal details.
-
-For online help and background, visit http://www.swi-prolog.org
-For built-in help, use ?- help(Topic). or ?- apropos(Word).
-
+$ swipl -f src/load.pl
+<blah blah>
 ?-
 
 ...
@@ -79,14 +72,6 @@ lines for example). However I was likely holding it wrong, did not have well mad
 	- [vcs-prolog](https://github.com/arthwang/vsc-prolog) is a VS Code plugin that provides, among
 other things, prolog source formatting. It is much newer than package-indent, and was also a supervised
 by Jan Wielmaker.
-
-* I have not found a good testing pattern. I really want to be able to run a test target.
-
-	```
-	$ make test` 
-	... blah blah ...
-	n/n test are successful!
-	```
 
 * I had trouble with the optparse module. The trouble was not unique to that module, however. The
 issue I faced was the the specification is a very specific kind of structure. Any goals that 

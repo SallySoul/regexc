@@ -67,6 +67,41 @@ gram_single(ast_error, All_Errors) -->
     All_Errors = [error("No closing parenthesis"), some(Pos)]
   }.
 
+ast_to_dot(Stream, Ast) :-
+  writeln(Stream, "digraph AST {"),
+  ast_to_dot_r(Stream, Ast, 0, _),
+  writeln(Stream, "}").
+
+ast_to_dot_r(Stream, ast_wildcard, Current_Index, Next_Index) :-
+  Next_Index is Current_Index + 1,
+  format(Stream, "\t~d [label=\"~d: wildcard\"]\n", [Current_Index, Current_Index]).
+
+ast_to_dot_r(Stream, ast_char(C), Current_Index, Next_Index) :-
+  Next_Index is Current_Index + 1, 
+  format(Stream, "\t~d [label=\"~d: char(~a)\"]\n", [Current_Index, Current_Index, C]).
+
+ast_to_dot_r(Stream, ast_occurance(Sub_Ast, Min, Max), Current_Index, Next_Index) :-
+  Sub_Ast_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_Ast, Sub_Ast_Index, Next_Index),
+  format(Stream, "\t~d [label=\"~d: Occurance, ~w - ~w]\"\n", [Current_Index, Current_Index, Min, Max]),
+  format(Stream, "\t~d -> ~d\n", [Current_Index, Sub_Ast_Index]).
+
+ast_to_dot_r(Stream, ast_concat(Sub_Ast_L, Sub_Ast_R), Current_Index, Next_Index) :-
+  Sub_Ast_L_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_Ast_L, Sub_Ast_L_Index, Sub_Ast_R_Index),
+  ast_to_dot_r(Stream, Sub_Ast_R, Sub_Ast_R_Index, Next_Index),
+  format(Stream, "\t~d [label=\"~d: Concat]\"\n", [Current_Index, Current_Index]),
+  format(Stream, "\t~d -> ~d\n", [Current_Index, Sub_Ast_L_Index]),
+  format(Stream, "\t~d -> ~d\n", [Current_Index, Sub_Ast_R_Index]).
+
+ast_to_dot_r(Stream, ast_or(Sub_Ast_L, Sub_Ast_R), Current_Index, Next_Index) :-
+  Sub_Ast_L_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_Ast_L, Sub_Ast_L_Index, Sub_Ast_R_Index),
+  ast_to_dot_r(Stream, Sub_Ast_R, Sub_Ast_R_Index, Next_Index),
+  format(Stream, "\t~d [label=\"~d: Or]\"\n", [Current_Index, Current_Index]),
+  format(Stream, "\t~d -> ~d\n", [Current_Index, Sub_Ast_L_Index]),
+  format(Stream, "\t~d -> ~d\n", [Current_Index, Sub_Ast_R_Index]).
+
 /*
 ast_occurance --> ast_single, ['{'], maybe_int(_),  [','], maybe_int(_), ['}'].
 
