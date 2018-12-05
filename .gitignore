@@ -1,4 +1,5 @@
 *.swp
 *.DS_STORE
+dirFile
 .dirFile
 build
