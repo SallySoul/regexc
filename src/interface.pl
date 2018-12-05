@@ -20,8 +20,8 @@ re2b_spec(App_Spec) :-
       help('Save the dot representation of the AST, to the specified path')
     ],
     [
-      opt(ast_nfa), type(atom), meta('PATH'),
-      longflags(['ast-nfa']),
+      opt(nfa_dot), type(atom), meta('PATH'),
+      longflags(['nfa-dot']),
       help('Save the dot representation of the NFA to the specified path')
     ],
     [
@@ -42,6 +42,12 @@ re2b_parse_options(Parse_Options) :-
 show_help_if_needed(Opts, App_Spec) :-
   member(help(true), Opts), !,
   opt_help(App_Spec, Help_Message),
+  writeln("re2b"),
+  writeln("\nSUMMARY:"),
+  writeln("Compile regular expressions into binary executables"),
+  writeln("\nUSAGE:"),
+  writeln("\tre2b [-r <regex> | -i <path] OPTIONS"),
+  writeln("\nFLAGS:"),
   write(user_output, Help_Message),
   halt(1).
 
@@ -84,13 +90,13 @@ parse_args(Args, Processed_Opts) :-
   Processed_Opts = (Regex_Strings, Remaining_Args).
 
 
-handle_error_found_flag(true) :-
+handle_error_found_flag(true) :- !,
   writeln("Exiting due to above errors"),
   halt(4).
-handle_error_found_flag(false).
+handle_error_found_flag(false) :- !.
 
 process_regex_string(Regex_String, (Asts, Error_Flag), ([Ast | Asts], Error_Flag)) :-
-  regex:string_ast(Regex_String, Ast, []).
+  regex:string_ast(Regex_String, Ast, []), !.
 
 process_regex_string(Regex_String, (Asts, _), (Asts, true)) :-
   regex:string_ast(Regex_String, _, Errors),
@@ -114,6 +120,14 @@ write_ast_dot(Opts, Ast) :-
   close(Ast_Dot_File).
 write_ast_dot(_, _).
 
+write_nfa_dot(Opts, Nfa) :-
+  member(nfa_dot(Path), Opts), atom(Path), !, 
+  absolute_file_name(Path, Absolute_Path),
+  open(Absolute_Path, write, Nfa_Dot_File),
+  statemachine:nfa_to_dot(Nfa_Dot_File, Nfa),
+  close(Nfa_Dot_File).
+write_nfa_dot(_, _).
+
 main(Args) :-
   parse_args(Args, (Regex_Strings, Remaining_Opts)),
 
@@ -123,6 +137,9 @@ main(Args) :-
 
   % Combine Asts, write to file if requested
   combine_asts(Asts, Combined_Ast),
-  write_ast_dot(Remaining_Opts, Combined_Ast).
+  write_ast_dot(Remaining_Opts, Combined_Ast),
 
+  % Create NFA from AST, write to file if requested
+  statemachine:ast_nfa(Combined_Ast, Nfa),
+  write_nfa_dot(Remaining_Opts, Nfa).
 

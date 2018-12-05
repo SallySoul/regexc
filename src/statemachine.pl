@@ -131,3 +131,43 @@ ast_nfa_r(
   Next_Index is Current_Index + 1.
 
 */
+state_to_dot(Stream, state(N)) :-
+  format(Stream, "\t~w;~n", N).
+
+states_to_dot(Stream, NFA_States) :-
+  nb_set_to_list(NFA_States, States),
+  maplist(state_to_dot(Stream), States).
+
+transition_to_dot(Stream, (state(Start_State), Input, state(Final_State))) :-
+  format(Stream, "\t~w -> ~w [label=\"~w\"];~n", [Start_State, Final_State, Input]).
+
+transitions_to_dot(Stream, NFA_Transitions) :-
+  nb_set_to_list(NFA_Transitions, Transitions),
+  maplist(transition_to_dot(Stream), Transitions).
+
+empty_transition_to_dot(Stream, (state(Start_State), state(Final_State))) :-
+  format(Stream, "\t~w -> ~w [label=\"ε\"];~n", [Start_State, Final_State]).
+
+empty_transitions_to_dot(Stream, NFA_Transitions) :-
+  nb_set_to_list(NFA_Transitions, Transitions),
+  maplist(transition_to_dot(Stream), Transitions).
+
+final_state_to_dot(Stream, state(N)) :-
+  format(Stream, "\t~w [shape=doublecircle];~n", [N]).
+
+final_states_to_dot(Stream, NFA_Final_States) :-
+  nb_set_to_list(NFA_Final_States, Final_States),
+  maplist(final_state_to_dot(Stream), Final_States).
+
+start_state_to_dot(Stream, state(N)) :-
+  format(Stream, "\t~w [shape=box];~n", [N]).
+
+nfa_to_dot(Stream, NFA) :-
+  NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States),
+  writeln(Stream, "digraph NFA {"),
+  states_to_dot(Stream, NFA_States),
+  transitions_to_dot(Stream, NFA_Transitions),
+  empty_transitions_to_dot(Stream, NFA_Empty_Transitions),
+  final_states_to_dot(Stream, NFA_Final_States),
+  start_state_to_dot(Stream, Start_State),
+  writeln(Stream, "}").
