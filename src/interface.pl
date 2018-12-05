@@ -101,18 +101,18 @@ combine_regex_asts([]) :-
   halt(5).
 
 combine_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
-  foldl(combine_regex_asts_fold, Rest_Of_Asts, First_Ast, Combined_Ast).
+  foldl(combine_asts_fold, Rest_Of_Asts, First_Ast, Combined_Ast).
 
 combine_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
   Next_Ast = ast_or(Current_Ast, Last_Ast).
 
-dump_ast_dot(Opts, Ast) :-
-  member(ast_dot(Path), Opts), !,
+write_ast_dot(Opts, Ast) :-
+  member(ast_dot(Path), Opts), atom(Path), !, 
   absolute_file_name(Path, Absolute_Path),
   open(Absolute_Path, write, Ast_Dot_File),
-  ast_to_dot(Ast_Dot_File, Ast),
+  regex:ast_to_dot(Ast_Dot_File, Ast),
   close(Ast_Dot_File).
-dump_ast_dot(_, _).
+write_ast_dot(_, _).
 
 main(Args) :-
   parse_args(Args, (Regex_Strings, Remaining_Opts)),
@@ -121,10 +121,8 @@ main(Args) :-
   foldl(process_regex_string, Regex_Strings, ([], false), (Asts, Parse_Error_Found_Flag)),
   handle_error_found_flag(Parse_Error_Found_Flag),
 
-  % Combine Asts, dump to file if requested
-  combine_asts(Asts, Combined_Ast).
-  %  dump_ast_dot(Remaining_Opts, Combined_Ast).
-
-
+  % Combine Asts, write to file if requested
+  combine_asts(Asts, Combined_Ast),
+  write_ast_dot(Remaining_Opts, Combined_Ast).
 
 
