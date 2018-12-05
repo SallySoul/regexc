@@ -22,7 +22,7 @@ Its role is to relate strings to (abstract syntax trees, error list) tuples.
 %   @arg Root_Ast_Node This is the ast_* node representation of the regular expression, modulo errors
 %   @arg Errors List of errors (reasons) why string, root are not the same. 
 string_ast(String, Root_Node, Errors) :- 
-  % We use the atom-as-char, let swipl deal with specifics
+  % We /* use  */the atom-as-char, let swipl deal with specifics
   % So this takes string, relates it to a list of chars / their positon
   string_chars(String, Chars), 
   util:enumeration(Chars, Enumerated_Chars),
@@ -59,12 +59,12 @@ gram_single(Ast_Node, All_Errors) -->
   [('(', Pos)], 
   gram_expr(Ast_Node, Errors), ! ,
   {
-    append(Errors, [error("No closing parenthesis"), some(Pos)], All_Errors)
+    append(Errors, [error("No closing parenthesis", some(Pos))], All_Errors)
   }.
 gram_single(ast_error, All_Errors) --> 
   [('(', Pos)], !, 
   {
-    All_Errors = [error("No closing parenthesis"), some(Pos)]
+    All_Errors = [error("No closing parenthesis", some(Pos))]
   }.
 
 ast_to_dot(Stream, Ast) :-
@@ -145,7 +145,7 @@ test_correct_string(Correct_String, Ast) :-
 test_incorrect_string(Incorrect_String, Ast, Errors) :-
   bagof(
     (Possible_Ast, Possible_Errors), 
-    string_ast(Incorrect_String, Possible_Ast, Possible_Errors), 
+    string_ast(Incorrect_String, Possible_Ast, Possible_Errors),
     Outputs
   ),
   % There should still only be one possible interpretation of the input string.
@@ -201,12 +201,12 @@ test(correct_strings) :-
       (
         "(",
         ast_error,
-        [error("No closing parenthesis"), some(0)]
+        [error("No closing parenthesis", some(0))]
       ),
       (
         "(a",
         ast_char(a),
-        [error("No closing parenthesis"), some(0)]
+        [error("No closing parenthesis", some(0))]
       )
   ],
   forall(member((Incorrect_Input, Matching_Ast, Matching_Errors), Incorrect_Strings),

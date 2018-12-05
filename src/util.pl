@@ -20,10 +20,15 @@ This module contains some helpful predicates that can be shared / don't belong a
 % @arg Input The original string being parsed.
 % @arg Errors The list of errors to print
 print_errors(_, []).
-print_errors(Input, [Error|Rest_Of_Errors]) :-
-  print_error(Input, Error),
-  print_errors(Input, Rest_Of_Errors).
+print_errors(Input, Errors) :-
+  maplist(print_error(Input), Errors).
 
+write_single_arrow(0) :-
+  write('^\n'), !.
+write_single_arrow(N) :-
+  write(' '),
+  M is N - 1,
+  write_single_arrow(M).
 
 %! print_errors(+Input:string, +Error:list) is det. 
 %
@@ -31,8 +36,11 @@ print_errors(Input, [Error|Rest_Of_Errors]) :-
 %
 % @arg Input The original string being parsed.
 % @arg Error The list of errors to print
+% TODO: We should probably propagate information about where regex came from
 print_error(Input, error(Message, some(Pos))) :-
-  format("~s~n~s at ~d", [Input, Message, Pos]).
+  format('ERROR: ~s at ~d~n', [Message, Pos]),
+  format('~w~n', [Input]),
+  write_single_arrow(Pos).
 
 %! enumeration(+List:list, +Enumerated_List:kist) is semidet.
 %

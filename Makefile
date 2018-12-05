@@ -11,7 +11,7 @@ $(MacOS_Distributeable_Path):
 	for dir in $(TEMPDIRS); do \
 		mkdir -p $$dir ; \
 	done
-	@touch dirFile
+	@touch .dirFile
 
 .PHONY: clean
 clean:
