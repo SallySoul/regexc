@@ -53,8 +53,8 @@ show_help_if_needed(Opts, App_Spec) :-
 
 show_help_if_needed(_, _).
 
-check_regexes([]) :-
-  writeln("You must pass at least one regex via --regex <regex> or --input-file <path>"),
+check_regexes([]) :- !,
+  writeln(user_output, "You must pass at least one regex via --regex <regex> or --input-file <path>"),
   halt(2).
 check_regexes(Regex_Strings) :-
   writeln("Regex Strings:"),
@@ -62,13 +62,14 @@ check_regexes(Regex_Strings) :-
 
 regex_opt_test(regex(X), <) :-
   atom(X), !.
-regex_opt_test(regex(_), =) :-
-  !.
+regex_opt_test(regex(_), =) :- !.
 regex_opt_test(_, >).
 
 process_regexes(Opts, Regex_Strings, Remaining_Opts) :-
-  partition(regex_opt_test, Opts, Regex_Opts, _, Remaining_Opts),
+  partition(regex_opt_test, Opts, Regex_Opts, M, Remaining_Opts),
+  format("O: ~w, RO: ~w, M: ~w, Rem: ~w~n", [Opts, Regex_Opts, M, Remaining_Opts]),
   bagof(Regex_Atom, member(regex(Regex_Atom), Regex_Opts), Regex_Atoms),
+  check_regexes(Regex_Opts),
   maplist(atom_string, Regex_Atoms, Regex_Strings).
 
 %
@@ -82,10 +83,10 @@ parse_args(Args, Processed_Opts) :-
   re2b_parse_options(Parse_Options),
   opt_parse(App_Spec, Args, Opts, _, Parse_Options),
   show_help_if_needed(Opts, App_Spec),
-
+  
   % Grab all the raw regex input and turn it into a list of strings
   process_regexes(Opts, Regex_Strings, Remaining_Args),
-
+  
   % Grab all the
   Processed_Opts = (Regex_Strings, Remaining_Args).
 
@@ -137,9 +138,9 @@ main(Args) :-
 
   % Combine Asts, write to file if requested
   combine_asts(Asts, Combined_Ast),
-  write_ast_dot(Remaining_Opts, Combined_Ast),
-
+  write_ast_dot(Remaining_Opts, Combined_Ast).
+/*
   % Create NFA from AST, write to file if requested
   statemachine:ast_nfa(Combined_Ast, Nfa),
   write_nfa_dot(Remaining_Opts, Nfa).
-
+*/
