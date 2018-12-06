@@ -138,9 +138,9 @@ main(Args) :-
 
   % Combine Asts, write to file if requested
   combine_asts(Asts, Combined_Ast),
-  write_ast_dot(Remaining_Opts, Combined_Ast).
-/*
+  write_ast_dot(Remaining_Opts, Combined_Ast),
+
   % Create NFA from AST, write to file if requested
   statemachine:ast_nfa(Combined_Ast, Nfa),
   write_nfa_dot(Remaining_Opts, Nfa).
-*/
+

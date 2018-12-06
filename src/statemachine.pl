@@ -1,6 +1,7 @@
 :- module(statemachine,
   [
-    ast_nfa/2
+    ast_nfa/2,
+    nfa_to_dot/2
   ]).
 
 :- use_module(library(nb_set)).
@@ -39,16 +40,23 @@ ast_nfa(Root_Node, NFA) :-
   Partial_NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions),
 
   % We use ast_nfa_r to recursivley build the NFA from the AST
-  % Each recurrence returns an nfa (a sub nfa, if you will) that 
+  % Each recurrence returns produces an nfa (a sub nfa, if you will) that 
   % is composed of a subset of the partial NFA. Each sub-NFA can 
   % be refered to by a starting state, and an ending state
-  Sub_NFA = (Start_State, Final_State),
+
+  Start_State = 0,
+  add_nb_set(Start_State, NFA_States),
 
   % Start our recursive construction
-  ast_nfa_r(Root_Node, Partial_NFA, 0, _, Sub_NFA),
+  ast_nfa_r(
+    Root_Node, 
+    Partial_NFA, 
+    Start_State,
+    Final_State
+  ),
 
-  % Create the final states set, and we have our finished NFA
   add_nb_set(Final_State, NFA_Final_States),
+
   NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States).
 
 
@@ -66,100 +74,126 @@ ast_nfa(Root_Node, NFA) :-
 ast_nfa_r(
   ast_char(X),
   Partial_NFA,
-  Current_Index,
-  Next_Index,
-  (State_Start, State_Final)
+  Start_State,
+  Final_State
 ) :-
-  Partial_NFA = (NFA_States, NFA_Transitions, _),
+  (NFA_States, NFA_Transitions, _) = Partial_NFA,
 
-  State_Start = state(Current_Index),
-  Next_Index_1 is Current_Index + 1,
-  State_Final = state(Next_Index_1),
+  Final_State is Start_State + 1,
+  add_nb_set(Final_State, NFA_States),
 
-  add_nb_set(State_Start, NFA_States),
-  add_nb_set(State_Final, NFA_States),
-  add_nb_set((State_Start, X, State_Final), NFA_Transitions ),
-
-  Next_Index is Current_Index + 1.
+  add_nb_set((Start_State, X, Final_State), NFA_Transitions ).
 
 %
-% ast_wildcard
-% state(N) -- wildcard --> state(N+1)
+% ast_char(X)
+% state(N) -- X --> state(N+1)
 %
 ast_nfa_r(
   ast_wildcard,
   Partial_NFA,
-  Current_Index,
-  Next_Index,
-  (State_Start, State_Final)
+  Start_State,
+  Final_State
 ) :-
-  Partial_NFA = (NFA_States, NFA_Transitions, _),
+  (NFA_States, NFA_Transitions, _) = Partial_NFA,
 
-  State_Start = state(Current_Index),
-  Next_Index_1 is Current_Index + 1,
-  State_Final = state(Next_Index_1),
+  Final_State is Start_State + 1,
+  add_nb_set(Final_State, NFA_States),
 
-  add_nb_set(State_Start, NFA_States),
-  add_nb_set(State_Final, NFA_States),
-  add_nb_set((State_Start, wildcard, State_Final), NFA_Transitions ),
+  add_nb_set((Start_State, *, Final_State), NFA_Transitions ).
 
-  Next_Index is Current_Index + 1.
-
-
-/*
 %
 % ast_occurance(Ast_Node, none, none)
 % state
 %
 ast_nfa_r(
-  ast_wildcard,
+  ast_concat(Sub_Ast_L, Sub_Ast_R),
   Partial_NFA,
-  Current_Index,
-  Next_Index,
-  (State_Start, State_Final)
+  Start_State,
+  Final_State
 ) :-
-  Partial_NFA = (NFA_States, NFA_Transitions, _),
+  ast_nfa_r(
+    Sub_Ast_L,
+    Partial_NFA,
+    Start_State,
+    Sub_Ast_R_Start
+  ),
 
-  State_Start = state(Current_Index),
-  Next_Index_1 is Current_Index + 1,
-  State_Final = state(Next_Index_1),
+  ast_nfa_r(
+    Sub_Ast_R,
+    Partial_NFA,
+    Sub_Ast_R_Start,
+    Final_State
+  ).
 
-  add_nb_set(State_Start, NFA_States),
-  add_nb_set(State_Final, NFA_States),
-  add_nb_set((State_Start, wildcard, State_Final), NFA_Transitions ),
+%
+% ast_occurance(Ast_Node, none, none)
+% state
+%
+ast_nfa_r(
+  ast_or(Sub_Ast_L, Sub_Ast_R),
+  Partial_NFA,
+  Start_State,
+  Final_State
+) :-
+  (NFA_States, _, NFA_Empty_Transitions) = Partial_NFA,
 
-  Next_Index is Current_Index + 1.
+  Sub_Ast_L_Start is Start_State + 1,
+  add_nb_set(Sub_Ast_L_Start, NFA_States),
+  
+  ast_nfa_r(
+    Sub_Ast_L,
+    Partial_NFA,
+    Sub_Ast_L_Start,
+    Sub_Ast_L_Final
+  ),
 
-*/
-state_to_dot(Stream, state(N)) :-
+  Sub_Ast_R_Start is Sub_Ast_L_Final + 1,
+  add_nb_set(Sub_Ast_R_Start, NFA_States),
+
+  ast_nfa_r(
+    Sub_Ast_R,
+    Partial_NFA,
+    Sub_Ast_R_Start,
+    Sub_Ast_R_Final
+  ),
+
+  Final_State is Sub_Ast_R_Final + 1,
+  add_nb_set(Final_State, NFA_States),
+
+  add_nb_set((Start_State, Sub_Ast_L_Start), NFA_Empty_Transitions),
+  add_nb_set((Start_State, Sub_Ast_R_Start), NFA_Empty_Transitions),
+  add_nb_set((Sub_Ast_L_Final, Final_State), NFA_Empty_Transitions),
+  add_nb_set((Sub_Ast_R_Final, Final_State), NFA_Empty_Transitions).
+
+state_to_dot(Stream, N) :-
   format(Stream, "\t~w;~n", N).
 
 states_to_dot(Stream, NFA_States) :-
   nb_set_to_list(NFA_States, States),
   maplist(state_to_dot(Stream), States).
 
-transition_to_dot(Stream, (state(Start_State), Input, state(Final_State))) :-
+transition_to_dot(Stream, (Start_State, Input, Final_State)) :-
   format(Stream, "\t~w -> ~w [label=\"~w\"];~n", [Start_State, Final_State, Input]).
 
 transitions_to_dot(Stream, NFA_Transitions) :-
   nb_set_to_list(NFA_Transitions, Transitions),
   maplist(transition_to_dot(Stream), Transitions).
 
-empty_transition_to_dot(Stream, (state(Start_State), state(Final_State))) :-
+empty_transition_to_dot(Stream, (Start_State, Final_State)) :-
   format(Stream, "\t~w -> ~w [label=\"ε\"];~n", [Start_State, Final_State]).
 
 empty_transitions_to_dot(Stream, NFA_Transitions) :-
   nb_set_to_list(NFA_Transitions, Transitions),
-  maplist(transition_to_dot(Stream), Transitions).
+  maplist(empty_transition_to_dot(Stream), Transitions).
 
-final_state_to_dot(Stream, state(N)) :-
+final_state_to_dot(Stream, N) :-
   format(Stream, "\t~w [shape=doublecircle];~n", [N]).
 
 final_states_to_dot(Stream, NFA_Final_States) :-
   nb_set_to_list(NFA_Final_States, Final_States),
   maplist(final_state_to_dot(Stream), Final_States).
 
-start_state_to_dot(Stream, state(N)) :-
+start_state_to_dot(Stream, N) :-
   format(Stream, "\t~w [shape=box];~n", [N]).
 
 nfa_to_dot(Stream, NFA) :-
