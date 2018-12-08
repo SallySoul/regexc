@@ -41,7 +41,7 @@ gram_or(ast_or(Ast_Node1, Ast_Node2), All_Errors) -->
 gram_or(ast_or(Ast_Node1, ast_error), All_Errors) -->
   gram_concat(Ast_Node1, Errors),
   [('|', Pos)],
-  { append(Errors, [error("Unexpected OR operator '|'", some(Pos))], All_Errors)}.
+  { append(Errors, [error("Unexpected OR operator", some(Pos))], All_Errors)}.
 
 gram_concat(Ast_Node, Errors) --> gram_occurance(Ast_Node, Errors).
 gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) --> 
@@ -52,8 +52,8 @@ gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) -->
 
 gram_occurance(Ast_Node, Errors) --> gram_single(Ast_Node, Errors).
 gram_occurance(ast_occurance(Ast_Node, none, none), Errors) --> gram_single(Ast_Node, Errors), [('*', _)].
-gram_occurance(ast_occurance(Ast_Node, none, 1), Errors) --> gram_single(Ast_Node, Errors), [('?', _)].
-gram_occurance(ast_occurance(Ast_Node, 1, none), Errors) --> gram_single(Ast_Node, Errors), [('+', _)].
+gram_occurance(ast_occurance(Ast_Node, none, some(1)), Errors) --> gram_single(Ast_Node, Errors), [('?', _)].
+gram_occurance(ast_occurance(Ast_Node, some(1), none), Errors) --> gram_single(Ast_Node, Errors), [('+', _)].
 % TODO define how to parse Expr{3, 5}
 
 gram_single(ast_char(X), []) --> [ (X, _) ], { char(X) }.
@@ -178,11 +178,11 @@ test(correct_strings) :-
     ),
     (
       "a?", 
-      ast_occurance(ast_char(a), none, 1)
+      ast_occurance(ast_char(a), none, some(1))
     ),
     (
       "a+", 
-      ast_occurance(ast_char(a), 1, none)
+      ast_occurance(ast_char(a), some(1), none)
     ),
     (
       "ab", 
@@ -215,6 +215,10 @@ test(correct_strings) :-
         "(a",
         ast_char(a),
         [error("No closing parenthesis", some(0))]
+      ),
+      (
+        "a|",
+        [error("Unexpected OR operator", some(1))]
       )
   ],
   forall(member((Incorrect_Input, Matching_Ast, Matching_Errors), Incorrect_Strings),

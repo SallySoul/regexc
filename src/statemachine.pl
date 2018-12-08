@@ -29,6 +29,12 @@ Also note that a finite automaton is non-determinisitic unless E = [].
 @license MIT
 */
 
+initialize_partial_nfa(Partial_NFA) :-
+  empty_nb_set(NFA_States),
+  empty_nb_set(NFA_Transitions),
+  empty_nb_set(NFA_Empty_Transitions),
+  Partial_NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions).
+
 ast_nfa(Root_Node, NFA) :-
   % We use non-backtracking sets to construct the NFA
   empty_nb_set(NFA_States),
@@ -168,6 +174,79 @@ ast_nfa_r(
   add_nb_set((Start_State, Sub_Ast_R_Start), NFA_Empty_Transitions),
   add_nb_set((Sub_Ast_L_Final, Final_State), NFA_Empty_Transitions),
   add_nb_set((Sub_Ast_R_Final, Final_State), NFA_Empty_Transitions).
+
+
+
+ast_nfa_r(
+  ast_occurance(Sub_Ast, Min, Max),
+  Partial_NFA,
+  (Start_State, Final_State),
+  (Next_Index, Used_Until_State)
+) :-
+
+  % Calculate the Min machine
+  ast_nfa_min_r(
+    (Sub_Ast, Min),
+    Partial_NFA,
+    (Start_State, Min_Final),
+    (Next_Index, Min_Used_Until)
+  ),
+
+  ast_nfa_max_r(
+    (Sub_Ast, Max),
+    Partial_NFA, 
+    (Min_Final, Final_State),
+    (Min_Used_Until, Used_Until_State)
+  ).
+
+ast_nfa_min_r(
+  (_, Min),
+  _,
+  (Start_State, Start_State),
+  (Next_State, Next_State)
+  ) :-
+    Min = none ; Min = some(0).
+
+ast_nfa_min_r(
+  (Sub_Ast, some(N)),
+  (Partial_NFA),
+  (Start_State, Final_State),
+  (Next_State, Used_Until_State)
+) :-
+  M is N - 1,
+
+  ast_nfa_r(
+    Sub_Ast,
+    Partial_NFA,
+    (Start_State, Middle_State),
+    (Next_State, Middle_Used_Until_State)
+  ),
+
+  ast_nfa_min_r(
+    (Sub_Ast, some(M)),
+    Partial_NFA,
+    (Middle_State, Final_State),
+    (Middle_Used_Until_State, Used_Until_State)
+  ).
+
+ast_nfa_max_r(
+  (Sub_Ast, none),
+  Partial_NFA,
+  (Start_State, Final_State),
+  (Next_State, Used_Until_State)
+) :-
+
+  (_, _, NFA_Empty_Transitions) = Partial_NFA,
+  
+  ast_nfa_r(
+    Sub_Ast,
+    Partial_NFA,
+    (Start_State, Final_State),
+    (Next_State, Used_Until_State)
+  ),
+
+  add_nb_set((Start_State, Final_State), NFA_Empty_Transitions),
+  add_nb_set((Final_State, Start_State), NFA_Empty_Transitions).
 
 state_to_dot(Stream, N) :-
   format(Stream, "\t~w;~n", N).
