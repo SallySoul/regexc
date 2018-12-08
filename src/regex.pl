@@ -36,8 +36,12 @@ gram_or(Ast_Node, Errors) --> gram_concat(Ast_Node, Errors).
 gram_or(ast_or(Ast_Node1, Ast_Node2), All_Errors) --> 
   gram_concat(Ast_Node1, Errors1), 
   [('|', _)], 
-  gram_concat(Ast_Node2, Errors2),
+  gram_or(Ast_Node2, Errors2),
   { append(Errors1, Errors2, All_Errors)}.
+gram_or(ast_or(Ast_Node1, ast_error), All_Errors) -->
+  gram_concat(Ast_Node1, Errors),
+  [('|', Pos)],
+  { append(Errors, [error("Unexpected OR operator '|'", some(Pos))], All_Errors)}.
 
 gram_concat(Ast_Node, Errors) --> gram_occurance(Ast_Node, Errors).
 gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) --> 
@@ -191,6 +195,10 @@ test(correct_strings) :-
     (
       "(ab)*", 
       ast_occurance(ast_concat(ast_char(a), ast_char(b)), none, none)
+    ),
+    (
+      "a|b|c",
+      ast_or(ast_char(a), ast_or(ast_char(b), ast_char(c)))
     )
   ],
   forall(member((Correct_Input, Correct_Output), Correct_Strings),

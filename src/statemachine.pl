@@ -46,13 +46,14 @@ ast_nfa(Root_Node, NFA) :-
 
   Start_State = 0,
   add_nb_set(Start_State, NFA_States),
+  Next_Available_State is Start_State + 1,
 
   % Start our recursive construction
   ast_nfa_r(
     Root_Node, 
     Partial_NFA, 
-    Start_State,
-    Final_State
+    (Start_State, Final_State),
+    (Next_Available_State, _)
   ),
 
   add_nb_set(Final_State, NFA_Final_States),
@@ -74,14 +75,14 @@ ast_nfa(Root_Node, NFA) :-
 ast_nfa_r(
   ast_char(X),
   Partial_NFA,
-  Start_State,
-  Final_State
+  (Start_State, Final_State),
+  (Final_State, Used_Until_State)
 ) :-
   (NFA_States, NFA_Transitions, _) = Partial_NFA,
 
-  Final_State is Start_State + 1,
-  add_nb_set(Final_State, NFA_States),
+  Used_Until_State is Final_State + 1,
 
+  add_nb_set(Final_State, NFA_States),
   add_nb_set((Start_State, X, Final_State), NFA_Transitions ).
 
 %
@@ -91,14 +92,14 @@ ast_nfa_r(
 ast_nfa_r(
   ast_wildcard,
   Partial_NFA,
-  Start_State,
-  Final_State
+  (Start_State, Final_State),
+  (Final_State, Used_Until_State)
 ) :-
   (NFA_States, NFA_Transitions, _) = Partial_NFA,
 
-  Final_State is Start_State + 1,
-  add_nb_set(Final_State, NFA_States),
+  Used_Until_State is Final_State + 1,
 
+  add_nb_set(Final_State, NFA_States),
   add_nb_set((Start_State, *, Final_State), NFA_Transitions ).
 
 %
@@ -108,21 +109,21 @@ ast_nfa_r(
 ast_nfa_r(
   ast_concat(Sub_Ast_L, Sub_Ast_R),
   Partial_NFA,
-  Start_State,
-  Final_State
+  (Start_State, Final_State),
+  (Next_Available_State, Used_Until_State)
 ) :-
   ast_nfa_r(
     Sub_Ast_L,
     Partial_NFA,
-    Start_State,
-    Sub_Ast_R_Start
+    (Start_State, Sub_Ast_R_Start),
+    (Next_Available_State, L_Used_Until_State)
   ),
 
   ast_nfa_r(
     Sub_Ast_R,
     Partial_NFA,
-    Sub_Ast_R_Start,
-    Final_State
+    (Sub_Ast_R_Start, Final_State),
+    (L_Used_Until_State, Used_Until_State)
   ).
 
 %
@@ -132,32 +133,35 @@ ast_nfa_r(
 ast_nfa_r(
   ast_or(Sub_Ast_L, Sub_Ast_R),
   Partial_NFA,
-  Start_State,
-  Final_State
+  (Start_State, Final_State),
+  (Sub_Ast_L_Start, Used_Until_State)
 ) :-
   (NFA_States, _, NFA_Empty_Transitions) = Partial_NFA,
 
-  Sub_Ast_L_Start is Start_State + 1,
   add_nb_set(Sub_Ast_L_Start, NFA_States),
+  Next_For_L is Sub_Ast_L_Start + 1,
   
   ast_nfa_r(
     Sub_Ast_L,
     Partial_NFA,
-    Sub_Ast_L_Start,
-    Sub_Ast_L_Final
+    (Sub_Ast_L_Start, Sub_Ast_L_Final),
+    (Next_For_L, L_Used_Until_State)
   ),
 
-  Sub_Ast_R_Start is Sub_Ast_L_Final + 1,
+  Sub_Ast_R_Start = L_Used_Until_State,
   add_nb_set(Sub_Ast_R_Start, NFA_States),
+
+  Next_For_R is L_Used_Until_State + 1,
 
   ast_nfa_r(
     Sub_Ast_R,
     Partial_NFA,
-    Sub_Ast_R_Start,
-    Sub_Ast_R_Final
+    (Sub_Ast_R_Start, Sub_Ast_R_Final),
+    (Next_For_R, R_Used_Until_State)
   ),
 
-  Final_State is Sub_Ast_R_Final + 1,
+  Final_State is R_Used_Until_State,
+  Used_Until_State is Final_State + 1,
   add_nb_set(Final_State, NFA_States),
 
   add_nb_set((Start_State, Sub_Ast_L_Start), NFA_Empty_Transitions),

@@ -1,3 +1,4 @@
 :- consult(load).
 
-show_coverage(run_tests).
+testing_report :- 
+  show_coverage(run_tests).

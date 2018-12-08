@@ -67,7 +67,7 @@ regex_opt_test(_, >).
 
 process_regexes(Opts, Regex_Strings, Remaining_Opts) :-
   partition(regex_opt_test, Opts, Regex_Opts, M, Remaining_Opts),
-  format("O: ~w, RO: ~w, M: ~w, Rem: ~w~n", [Opts, Regex_Opts, M, Remaining_Opts]),
+  %format("O: ~w, RO: ~w, M: ~w, Rem: ~w~n", [Opts, Regex_Opts, M, Remaining_Opts]),
   bagof(Regex_Atom, member(regex(Regex_Atom), Regex_Opts), Regex_Atoms),
   check_regexes(Regex_Opts),
   maplist(atom_string, Regex_Atoms, Regex_Strings).
