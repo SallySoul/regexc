@@ -266,26 +266,51 @@ test(correct_strings) :-
     )
   ],
   forall(member((Correct_Input, Correct_Output), Correct_Strings),
-         assertion(test_correct_string(Correct_Input, Correct_Output))).
+    assertion(test_correct_string(Correct_Input, Correct_Output))
+  ).
 
-  test(incorrect_strings) :- 
-    Incorrect_Strings = [
-      (
-        "(",
-        ast_error,
-        [error("No closing parenthesis", some(0))]
-      ),
-      (
-        "(a",
-        ast_char(a),
-        [error("No closing parenthesis", some(0))]
-      ),
-      (
-        "a|",
-        [error("Unexpected OR operator", some(1))]
-      )
+test(incorrect_strings) :- 
+  Incorrect_Strings = [
+    (
+      "(",
+      ast_error,
+      [error("No closing parenthesis", some(0))]
+    ),
+    (
+      "(a",
+      ast_char(a),
+      [error("No closing parenthesis", some(0))]
+    ),
+    (
+      "a|",
+      [error("Unexpected OR operator", some(1))]
+    )
   ],
   forall(member((Incorrect_Input, Matching_Ast, Matching_Errors), Incorrect_Strings),
-         assertion(test_incorrect_string(Incorrect_Input, Matching_Ast, Matching_Errors))).
+    assertion(test_incorrect_string(Incorrect_Input, Matching_Ast, Matching_Errors))
+  ).
+
+test_combined_ast(Asts, Correct_Ast) :-
+  combined_asts(Asts, Ast),
+  assertion(Ast = Correct_Ast).
+
+test(combined_asts) :-
+  Combined_Asts = [
+    (
+      [ast_char(a)],
+      ast_char(a)
+    ),
+    (
+      [ast_char(a), ast_char(b)],
+      ast_or(ast_char(b), ast_char(a))
+    ),
+    (
+      [ast_char(a), ast_char(b), ast_char(c)],
+      ast_or(ast_char(c), ast_or(ast_char(b), ast_char(a)))
+    )
+  ],
+  forall(member((Asts, Correct_Ast), Combined_Asts),
+    assertion(test_combined_ast(Asts, Correct_Ast))
+  ).
 
 :- end_tests(regex_ast).
