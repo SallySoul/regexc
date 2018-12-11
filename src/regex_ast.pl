@@ -59,12 +59,46 @@ gram_occurance(ast_occurance(Ast_Node, none, none), Errors) --> gram_single(Ast_
 gram_occurance(ast_occurance(Ast_Node, none, some(1)), Errors) --> gram_single(Ast_Node, Errors), [('?', _)].
 gram_occurance(ast_occurance(Ast_Node, some(1), none), Errors) --> gram_single(Ast_Node, Errors), [('+', _)].
 gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
+  gram_single(Ast_Node, Node_Errors),
+  [('{', _)],
+  gram_occurance_fields(Min, Max, Field_Errors),
+  [('}', _)],
+  {
+    append(Node_Errors, Field_Errors, Errors)
+  }.
+
+gram_occurance_fields(Min, Max, []) -->
+  maybe_integer(Min),
+  [(',', _)],
+  maybe_integer(Max).
+
+gram_occurance_fields(Min, none, Errors) -->
+  maybe_integer(Min),
+  any_char(_, Pos),
+  {
+    Errors = [ error("Expected digit or ','", some(Pos))]
+  }.
+
+any_char(C, Pos) -->
+  [(C, Pos)].
+
+  /*
+gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
   gram_single(Ast_Node, Errors),
   [('{', _)],
   maybe_integer(Min),
   [(',', _)],
-  maybe_integer(Max),
-  [('}', _)].
+  {
+    append(Errors, [error("No closing bracket", some(Pos))], All_Errors)
+  }.
+
+gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
+  gram_single(Ast_Node, Errors),
+  [('{', _)],
+  {
+    All_Errors = [error("No closing parenthesis", some(Pos))]
+  }.
+*/
 
 gram_single(ast_char(X), []) --> [ (X, _) ], { char(X) }.
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
@@ -131,7 +165,6 @@ integer(I) -->
   digits(D),
   { number_chars(I, [D0|D])}.
 
-
 digits([D|T]) -->
   digit(D), !,
   digits(T).
@@ -151,13 +184,14 @@ char('c').
 
 % A correct string has a 1-1 relationship with some Ast
 test_correct_string(Correct_String, Ast) :- 
-  % There are no errors
-  Errors = [],
   bagof(Possible_Ast, string_ast(Correct_String, Possible_Ast, Errors), Asts),
   % There is only one Ast. 
   % TODO: I think maybe there shouldn't be any choice points here?
   % I think pltest has the easy facility to test a deterministic function
-  Asts = [Ast].
+  assertion(Asts = [Ast]),
+
+  % There are no errors
+  assertion(Errors = []).
 
 % An incorrection sting will have some ast artifact, and a non-emtpy list of errors.
 test_incorrect_string(Incorrect_String, Ast, Errors) :-
@@ -168,7 +202,7 @@ test_incorrect_string(Incorrect_String, Ast, Errors) :-
   ),
   % There should still only be one possible interpretation of the input string.
   % I think.
-  Outputs = [(Ast, Errors)].
+  assertion(Outputs = [(Ast, Errors)]).
 
 test(correct_strings) :- 
   Correct_Strings= [
@@ -213,6 +247,22 @@ test(correct_strings) :-
     (
       "a|b|c",
       ast_or(ast_char(a), ast_or(ast_char(b), ast_char(c)))
+    ),
+    (
+      "a{,}",
+      ast_occurance(ast_char(a), none, none)
+    ),
+    (
+      "a{1,}",
+      ast_occurance(ast_char(a), some(1), none)
+    ),
+    (
+      "a{,1}",
+      ast_occurance(ast_char(a), none, some(1))
+    ),
+    (
+      "a{12,18}",
+      ast_occurance(ast_char(a), some(12), some(18))
     )
   ],
   forall(member((Correct_Input, Correct_Output), Correct_Strings),
