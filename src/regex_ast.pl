@@ -313,4 +313,10 @@ test(combined_asts) :-
     assertion(test_combined_ast(Asts, Correct_Ast))
   ).
 
+test_dot_output(String, Correct_Dot_File) :-
+  assertion(string_ast(String, Ast, [])),
+  tmp_file_stream(test, Temp_FileName, Output_Stream),
+  ast_to_dot(Output_Stream, Ast),
+  close(Output_Stream).
+
 :- end_tests(regex_ast).
