@@ -58,7 +58,13 @@ gram_occurance(Ast_Node, Errors) --> gram_single(Ast_Node, Errors).
 gram_occurance(ast_occurance(Ast_Node, none, none), Errors) --> gram_single(Ast_Node, Errors), [('*', _)].
 gram_occurance(ast_occurance(Ast_Node, none, some(1)), Errors) --> gram_single(Ast_Node, Errors), [('?', _)].
 gram_occurance(ast_occurance(Ast_Node, some(1), none), Errors) --> gram_single(Ast_Node, Errors), [('+', _)].
-% TODO define how to parse Expr{3, 5}
+gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
+  gram_single(Ast_Node, Errors),
+  [('{', _)],
+  maybe_integer(Min),
+  [(',', _)],
+  maybe_integer(Max),
+  [('}', _)].
 
 gram_single(ast_char(X), []) --> [ (X, _) ], { char(X) }.
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
@@ -116,26 +122,24 @@ combined_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
 combined_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
   Next_Ast = ast_or(Current_Ast, Last_Ast).
 
-/*
-ast_occurance --> ast_single, ['{'], maybe_int(_),  [','], maybe_int(_), ['}'].
 
-maybe_int(some(I))--> integer(I).
-maybe_int(none) --> [].
+maybe_integer(some(I))--> integer(I).
+maybe_integer(none) --> [].
 
 integer(I) -->
   digit(D0),
   digits(D),
-  { number_chars(I, [D0|D]}.
-*/
-/*
+  { number_chars(I, [D0|D])}.
+
+
 digits([D|T]) -->
   digit(D), !,
   digits(T).
 digits([]) -->
   [].
-*/
+
 digit(D) -->
-  [D],
+  [(D, _)],
   { char_type(D, digit)}.
 
 %! char(C).
