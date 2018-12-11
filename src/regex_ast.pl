@@ -1,7 +1,11 @@
-:- module(regex,
+:- module(regex_ast,
   [
-    string_ast/3
+    string_ast/3,
+    ast_to_dot/2,
+    combined_asts/2
   ]).
+
+:- use_module(util).
 
 /** <module> regex
 
@@ -106,6 +110,12 @@ ast_to_dot_r(Stream, ast_or(Sub_Ast_L, Sub_Ast_R), Current_Index, Next_Index) :-
   format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_L_Index]),
   format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_R_Index]).
 
+combined_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
+  foldl(combined_asts_fold, Rest_Of_Asts, First_Ast, Combined_Ast).
+
+combined_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
+  Next_Ast = ast_or(Current_Ast, Last_Ast).
+
 /*
 ast_occurance --> ast_single, ['{'], maybe_int(_),  [','], maybe_int(_), ['}'].
 
@@ -133,7 +143,7 @@ char('a').
 char('b').
 char('c').
 
-:- begin_tests(regex).
+:- begin_tests(regex_ast).
 
 % A correct string has a 1-1 relationship with some Ast
 test_correct_string(Correct_String, Ast) :- 
@@ -224,4 +234,4 @@ test(correct_strings) :-
   forall(member((Incorrect_Input, Matching_Ast, Matching_Errors), Incorrect_Strings),
          assertion(test_incorrect_string(Incorrect_Input, Matching_Ast, Matching_Errors))).
 
-:- end_tests(regex).
+:- end_tests(regex_ast).

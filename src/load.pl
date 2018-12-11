@@ -1,4 +1,5 @@
-:- use_module('util.pl').
-:- use_module('regex.pl').
-:- use_module('statemachine.pl').
+:- use_module('util').
+:- use_module('regex_ast').
+:- use_module('regex_parsing').
+:- use_module('statemachine').
 

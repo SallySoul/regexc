@@ -17,8 +17,7 @@ re2b_spec(App_Spec) :-
     [
       opt(ast_dot), type(atom), meta('PATH'),
       longflags(['ast-dot']),
-      help('Save the dot representation of the AST, to the specified path')
-    ],
+      help('Save the dot representation of the AST, to the specified path') ],
     [
       opt(nfa_dot), type(atom), meta('PATH'),
       longflags(['nfa-dot']),
@@ -53,12 +52,9 @@ show_help_if_needed(Opts, App_Spec) :-
 
 show_help_if_needed(_, _).
 
-check_regexes([]) :- !,
+no_regex_string_error :-
   writeln(user_output, "You must pass at least one regex via --regex <regex> or --input-file <path>"),
   halt(2).
-check_regexes(Regex_Strings) :-
-  writeln("Regex Strings:"),
-  writeln(Regex_Strings).
 
 regex_opt_test(regex(X), <) :-
   atom(X), !.
@@ -67,9 +63,10 @@ regex_opt_test(_, >).
 
 process_regexes(Opts, Regex_Strings, Remaining_Opts) :-
   partition(regex_opt_test, Opts, Regex_Opts, _, Remaining_Opts),
-  %format("O: ~w, RO: ~w, M: ~w, Rem: ~w~n", [Opts, Regex_Opts, M, Remaining_Opts]),
-  bagof(Regex_Atom, member(regex(Regex_Atom), Regex_Opts), Regex_Atoms),
-  check_regexes(Regex_Opts),
+
+  (bagof(Regex_Atom, member(regex(Regex_Atom), Regex_Opts), Regex_Atoms) ;
+  no_regex_string_error),
+
   maplist(atom_string, Regex_Atoms, Regex_Strings).
 
 %
@@ -83,7 +80,7 @@ parse_args(Args, Processed_Opts) :-
   re2b_parse_options(Parse_Options),
   opt_parse(App_Spec, Args, Opts, _, Parse_Options),
   show_help_if_needed(Opts, App_Spec),
-  
+
   % Grab all the raw regex input and turn it into a list of strings
   process_regexes(Opts, Regex_Strings, Remaining_Args),
   
@@ -91,27 +88,10 @@ parse_args(Args, Processed_Opts) :-
   Processed_Opts = (Regex_Strings, Remaining_Args).
 
 
-handle_error_found_flag(true) :- !,
-  writeln("Exiting due to above errors"),
+handle_error_flag(true, Message) :- !,
+  writeln(Message),
   halt(4).
-handle_error_found_flag(false) :- !.
-
-process_regex_string(Regex_String, (Asts, Error_Flag), ([Ast | Asts], Error_Flag)) :-
-  regex:string_ast(Regex_String, Ast, []), !.
-
-process_regex_string(Regex_String, (Asts, _), (Asts, true)) :-
-  regex:string_ast(Regex_String, _, Errors),
-  print_errors(Regex_String, Errors).
-
-combine_regex_asts([]) :-
-  writeln(user_error, "COMPILER ERROR: No regex Asts to combine"),
-  halt(5).
-
-combine_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
-  foldl(combine_asts_fold, Rest_Of_Asts, First_Ast, Combined_Ast).
-
-combine_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
-  Next_Ast = ast_or(Current_Ast, Last_Ast).
+handle_error_flag(false, _Message) :- !.
 
 write_ast_dot(Opts, Ast) :-
   member(ast_dot(Path), Opts), atom(Path), !, 
@@ -132,15 +112,26 @@ write_nfa_dot(_, _).
 main(Args) :-
   parse_args(Args, (Regex_Strings, Remaining_Opts)),
 
-  % Parse all the regex strings into Asts, halt if errors are found
-  foldl(process_regex_string, Regex_Strings, ([], false), (Asts, Parse_Error_Found_Flag)),
-  handle_error_found_flag(Parse_Error_Found_Flag),
+  % Parse all the regex strings into Asts, 
+  % halt if errors are found
+  % dump
+  regex_parsing:parse_regex_strings(
+    user_output,
+    Regex_Strings, 
+    Ast,
+    Parse_Error_Flag
+  ),
+  write_ast_dot(Remaining_Opts, Ast),
 
-  % Combine Asts, write to file if requested
-  combine_asts(Asts, Combined_Ast),
-  write_ast_dot(Remaining_Opts, Combined_Ast),
+  handle_error_flag(
+    Parse_Error_Flag,
+    "Exiting due to above Errors..." 
+  ),
 
   % Create NFA from AST, write to file if requested
-  statemachine:ast_nfa(Combined_Ast, Nfa),
-  write_nfa_dot(Remaining_Opts, Nfa).
+  statemachine:ast_nfa(Ast, Nfa),
+  (write_nfa_dot(Remaining_Opts, Nfa) ;
+  handle_error_flag(true, "Could not transform ast into NFA")).
+
+
 
