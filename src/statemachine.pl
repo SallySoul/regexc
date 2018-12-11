@@ -192,7 +192,7 @@ ast_nfa_r(
     (Next_Index, Min_Used_Until)
   ),
 
-  ast_nfa_max_r(
+  ast_nfa_max(
     (Sub_Ast, Max),
     Partial_NFA, 
     (Min_Final, Final_State),
@@ -229,7 +229,7 @@ ast_nfa_min_r(
     (Middle_Used_Until_State, Used_Until_State)
   ).
 
-ast_nfa_max_r(
+ast_nfa_max(
   (Sub_Ast, none),
   Partial_NFA,
   (Start_State, Final_State),
@@ -247,6 +247,59 @@ ast_nfa_max_r(
 
   add_nb_set((Start_State, Final_State), NFA_Empty_Transitions),
   add_nb_set((Final_State, Start_State), NFA_Empty_Transitions).
+
+ast_nfa_max(
+  (Sub_Ast, some(N)),
+  Partial_NFA,
+  (Start_State, Final_State),
+  (Next_State, Used_Until_State)
+) :-
+  (NFA_States, _, NFA_Empty_Transitions) = Partial_NFA,
+
+  Final_State = Next_State,
+  add_nb_set(Final_State, NFA_States),
+  add_nb_set((Start_State, Final_State), NFA_Empty_Transitions),
+  First_A_State is Final_State + 1,
+
+  ast_nfa_max_r(
+    (Sub_Ast, N),
+    Partial_NFA,
+    (Start_State, Final_State),
+    (First_A_State, Used_Until_State)
+  ).
+ 
+ast_nfa_max_r(
+  (_, 0),
+  _,
+  (Start_State, Start_State),
+  (First_A_State, First_A_State)
+).
+
+ast_nfa_max_r(
+  (Sub_Ast, N),
+  Partial_NFA,
+  (Start_State, Final_State),
+  (Next_State, Used_Until_State)
+) :-
+  
+  (_, _, NFA_Empty_Transitions) = Partial_NFA,
+
+  ast_nfa_r(
+    Sub_Ast,
+    Partial_NFA,
+    (Start_State, Middle_State),
+    (Next_State, Middle_Used_Until)
+  ),
+
+  add_nb_set((Middle_State, Final_State), NFA_Empty_Transitions),
+
+  M is N - 1,
+  ast_nfa_max_r(
+    (Sub_Ast, M),
+    Partial_NFA,
+    (Middle_State, Final_State),
+    (Middle_Used_Until, Used_Until_State)
+  ).
 
 state_to_dot(Stream, N) :-
   format(Stream, "\t~w;~n", N).
