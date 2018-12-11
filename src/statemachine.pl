@@ -192,8 +192,10 @@ ast_nfa_r(
     (Next_Index, Min_Used_Until)
   ),
 
+  max_diff(Min, Max, Diff),
+
   ast_nfa_max(
-    (Sub_Ast, Max),
+    (Sub_Ast, Diff),
     Partial_NFA, 
     (Min_Final, Final_State),
     (Min_Used_Until, Used_Until_State)
@@ -229,6 +231,11 @@ ast_nfa_min_r(
     (Middle_Used_Until_State, Used_Until_State)
   ).
 
+max_diff(none, none, none).
+max_diff(_, none, none).
+max_diff(none, some(N), some(N)).
+max_diff(some(Min), some(Max), some(Diff)) :- Diff is Max - Min.
+
 ast_nfa_max(
   (Sub_Ast, none),
   Partial_NFA,
@@ -262,23 +269,23 @@ ast_nfa_max(
   First_A_State is Final_State + 1,
 
   ast_nfa_max_r(
-    (Sub_Ast, N),
+    (Sub_Ast, N, Final_State),
     Partial_NFA,
-    (Start_State, Final_State),
+    Start_State,
     (First_A_State, Used_Until_State)
   ).
  
 ast_nfa_max_r(
-  (_, 0),
-  _,
-  (Start_State, Start_State),
+  (_, 0, _),
+  _Partial_NFA,
+  _Start_State,
   (First_A_State, First_A_State)
 ).
 
 ast_nfa_max_r(
-  (Sub_Ast, N),
+  (Sub_Ast, N, Final_State),
   Partial_NFA,
-  (Start_State, Final_State),
+  Start_State,
   (Next_State, Used_Until_State)
 ) :-
   
@@ -295,9 +302,9 @@ ast_nfa_max_r(
 
   M is N - 1,
   ast_nfa_max_r(
-    (Sub_Ast, M),
+    (Sub_Ast, M, Final_State),
     Partial_NFA,
-    (Middle_State, Final_State),
+    Middle_State,
     (Middle_Used_Until, Used_Until_State)
   ).
 
@@ -341,3 +348,9 @@ nfa_to_dot(Stream, NFA) :-
   final_states_to_dot(Stream, NFA_Final_States),
   start_state_to_dot(Stream, Start_State),
   writeln(Stream, "}").
+
+nfa_dot_to_file(Path, Nfa) :-
+  absolute_file_name(Path, Absolute_Path),
+  open(Absolute_Path, write, Nfa_Dot_File),
+  statemachine:nfa_to_dot(Nfa_Dot_File, Nfa),
+  close(Nfa_Dot_File).
