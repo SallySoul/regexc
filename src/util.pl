@@ -23,7 +23,7 @@ enumeration_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumeration_r(Ls, Es, N).
 
 test_enumeration(Input, Correct_Output) :-
   enumeration(Input, Output),
-  assertion(Ouput = Correct_Output).
+  assertion(Output = Correct_Output).
 
 test(enumeration) :- 
   Enumerated_Lists = [
