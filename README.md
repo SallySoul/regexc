@@ -1,5 +1,7 @@
 # regexc
 
+[![Build Status](https://travis-ci.org/SallySoul/regexc.svg?branch=master)](https://travis-ci.org/SallySoul/regexc)
+
 ## Introduction
 
 regexc is a regular expression compiler. It takes a regular expression as input and creates a binary,
@@ -91,3 +93,6 @@ I found this project to be a useful example of many prolog techniques.
 
 I found this SO question useful when investigating how to handle input.
 [String Stream in Prolog?](https://stackoverflow.com/questions/23593156/string-stream-in-prolog)
+
+I found this article useful for adding travis support.
+[Adding Travis to SWI-Prolog packs](https://rlaanemets.com/post/show/adding-travis-to-swi-prolog-packs)
