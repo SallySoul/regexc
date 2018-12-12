@@ -115,10 +115,10 @@ gram_single(ast_error, All_Errors) -->
     All_Errors = [error("No closing parenthesis", some(Pos))]
   }.
 
-ast_to_dot(Stream, Ast) :-
-  writeln(Stream, "digraph AST {"),
+ast_to_dot(Ast, Stream) :-
+  format(Stream, "digraph AST {~n", []),
   ast_to_dot_r(Stream, Ast, 0, _),
-  writeln(Stream, "}").
+  format(Stream, "}~n", []).
 
 ast_to_dot_r(Stream, ast_wildcard, Current_Index, Next_Index) :-
   Next_Index is Current_Index + 1,
@@ -313,10 +313,39 @@ test(combined_asts) :-
     assertion(test_combined_ast(Asts, Correct_Ast))
   ).
 
-test_dot_output(String, _Correct_Dot_File) :-
-  assertion(string_ast(String, Ast, [])),
-  tmp_file_stream(test, _Temp_FileName, Output_Stream),
-  ast_to_dot(Output_Stream, Ast),
-  close(Output_Stream).
+test_dot_output(String, Correct_Dot_File) :-
+  string_ast(String, Ast, Errors),
+  assertion(Errors = []),
+
+  tmp_file_stream(text, Test_File, TO), close(TO),
+  util:write_to_file(ast_to_dot(Ast), Test_File),
+  util:file_diff(Test_File, Correct_Dot_File, Diff),
+
+  string_length(Diff, Diff_Length),
+  assertion(Diff_Length = 0),
+  (Diff = "" ; format("~n~w~n", [Diff])).
+
+test(ast_to_string) :-
+  Dot_Files = [
+    (
+      "a",
+      "tests/ast/ast_1.dot"
+    ),
+    (
+      "a|b|c",
+      "tests/ast/ast_2.dot"
+    ),
+    (
+      "(a|b|c){2,3}abc+",
+      "tests/ast/ast_3.dot"
+    ),
+    (
+      "a*b+c?(.|(ca)){3,7}",
+      "tests/ast/ast_4.dot"
+    )
+  ],
+  forall(member((String, Correct_Dot_File), Dot_Files),
+    assertion(test_dot_output(String, Correct_Dot_File))
+  ).
 
 :- end_tests(regex_ast).

@@ -6,8 +6,6 @@
 
 :- use_module(regex_ast).
 
-
-
 %! print_errors(+Input:string, +Errors:list) is det. 
 %
 % This predicate prints out the error list in a nicely formated way

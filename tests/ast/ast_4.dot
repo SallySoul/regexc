@@ -1,0 +1,31 @@
+digraph AST {
+	2 [label="2: char(a)"];
+	1 [label="1: Occurance, none - none"];
+	1 -> 2;
+	5 [label="5: char(b)"];
+	4 [label="4: Occurance, some(1) - none"];
+	4 -> 5;
+	8 [label="8: char(c)"];
+	7 [label="7: Occurance, none - some(1)"];
+	7 -> 8;
+	11 [label="11: wildcard"];
+	13 [label="13: char(c)"];
+	14 [label="14: char(a)"];
+	12 [label="12: Concat"];
+	12 -> 13;
+	12 -> 14;
+	10 [label="10: Or"];
+	10 -> 11;
+	10 -> 12;
+	9 [label="9: Occurance, some(3) - some(7)"];
+	9 -> 10;
+	6 [label="6: Concat"];
+	6 -> 7;
+	6 -> 9;
+	3 [label="3: Concat"];
+	3 -> 4;
+	3 -> 6;
+	0 [label="0: Concat"];
+	0 -> 1;
+	0 -> 3;
+}

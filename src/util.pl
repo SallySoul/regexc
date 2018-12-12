@@ -19,6 +19,30 @@ enumeration(Ls, Es) :- enumeration_r(Ls, Es, 0).
 enumeration_r([], [], _).
 enumeration_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumeration_r(Ls, Es, N).
 
+write_to_file(Goal, Path) :-
+  absolute_file_name(Path, Absolute_Path),
+  open(Absolute_Path, write, File_Output),
+  call(Goal, File_Output),
+  close(File_Output).
+
+file_diff(Path_1, Path_2, Diff) :-
+  absolute_file_name(Path_1, Absolute_Path_1),
+  absolute_file_name(Path_2, Absolute_Path_2),
+  assertion(exists_file(Absolute_Path_1)),
+  assertion(exists_file(Absolute_Path_2)),
+  process_create(
+    "/usr/bin/env", 
+    ["git", "diff", Absolute_Path_1, Absolute_Path_2], 
+    [process(Diff_PID), stdout(pipe(Diff_Output))]
+  ),
+  process_wait(
+    Diff_PID,
+    Status,
+    [timeout(1)]
+  ),
+  assertion(Status = exit(0)),
+  read_string(Diff_Output, _, Diff).
+  
 :- begin_tests(util).
 
 test_enumeration(Input, Correct_Output) :-
