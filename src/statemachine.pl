@@ -387,5 +387,4 @@ test(ast_to_string) :-
     assertion(test_dot_output(String, Correct_Dot_File))
   ).
 
-:
 :- end_tests(statemachine).

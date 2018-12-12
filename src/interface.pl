@@ -2,6 +2,9 @@
 :- use_module(library(optparse)).
 :- initialization(main, main).
 
+%
+% This descripes the CLI specification for optparse
+%
 re2b_spec(App_Spec) :-
   App_Spec = [
     [
@@ -30,6 +33,9 @@ re2b_spec(App_Spec) :-
     ]
   ].
 
+%
+% These are the options we want to use for optparse
+%
 re2b_parse_options(Parse_Options) :-
   Parse_Options = [
     duplicated_flags(keepall)
@@ -49,31 +55,39 @@ show_help_if_needed(Opts, App_Spec) :-
   writeln("\nFLAGS:"),
   write(user_output, Help_Message),
   halt(1).
-
 show_help_if_needed(_, _).
 
-no_regex_string_error :-
-  writeln(user_output, "You must pass at least one regex via --regex <regex> or --input-file <path>"),
-  halt(2).
-
+%
+% We use this test to partions the CLI options into
+% < -> valid regex(+String) inputs,
+% = -> regex(X) where X is not an atom, these are discarded
+% > -> all other CLI options
+%
 regex_opt_test(regex(X), <) :-
   atom(X), !.
 regex_opt_test(regex(_), =) :- !.
 regex_opt_test(_, >).
 
+no_regex_string_error :-
+  writeln(user_output, "You must pass at least one regex via --regex <regex> or --input-file <path>"),
+  halt(2).
+
+%
+% seperate the regex(X) options, convert Xs from atoms to strings
+%
 process_regexes(Opts, Regex_Strings, Remaining_Opts) :-
   partition(regex_opt_test, Opts, Regex_Opts, _, Remaining_Opts),
-
   (bagof(Regex_Atom, member(regex(Regex_Atom), Regex_Opts), Regex_Atoms) ;
   no_regex_string_error),
-
   maplist(atom_string, Regex_Atoms, Regex_Strings).
 
 %
 % Parse Arguments, check their validity, and process them into a tuple
-% (Input_Strings, Outputs) where
+% (Input_Strings, Remaingin_Args) where
 % Input_Strings is an array of strings representing regular expressions
-% Outputs is an array of terms of the form <stage_output>(<array of output paths>).
+% Remaining_Args.
+%
+% TODO: I'm being inconsistant between Args and Options
 %
 parse_args(Args, Processed_Opts) :-
   re2b_spec(App_Spec),
@@ -87,7 +101,8 @@ parse_args(Args, Processed_Opts) :-
   % Grab all the
   Processed_Opts = (Regex_Strings, Remaining_Args).
 
-
+% We use this to handle errors at a stage in the comiler
+% and halt
 handle_error_flag(true, Message) :- !,
   writeln(Message),
   halt(4).

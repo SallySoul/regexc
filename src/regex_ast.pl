@@ -150,6 +150,9 @@ ast_to_dot_r(Stream, ast_or(Sub_Ast_L, Sub_Ast_R), Current_Index, Next_Index) :-
   format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_L_Index]),
   format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_R_Index]).
 
+%
+% Takes a list of Asts, and combines them with the or operator
+%
 combined_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
   foldl(combined_asts_fold, Rest_Of_Asts, First_Ast, Combined_Ast).
 
