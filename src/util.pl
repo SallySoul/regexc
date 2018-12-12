@@ -31,8 +31,8 @@ file_diff(Path_1, Path_2, Diff) :-
   assertion(exists_file(Absolute_Path_1)),
   assertion(exists_file(Absolute_Path_2)),
   process_create(
-    "/usr/bin/env", 
-    ["git", "diff", Absolute_Path_1, Absolute_Path_2], 
+    "/usr/bin/env",
+    ["git", "diff", Absolute_Path_1, Absolute_Path_2],
     [process(Diff_PID), stdout(pipe(Diff_Output))]
   ),
   process_wait(
@@ -42,14 +42,14 @@ file_diff(Path_1, Path_2, Diff) :-
   ),
   assertion(Status = exit(0)),
   read_string(Diff_Output, _, Diff).
-  
+
 :- begin_tests(util).
 
 test_enumeration(Input, Correct_Output) :-
   enumeration(Input, Output),
   assertion(Output = Correct_Output).
 
-test(enumeration) :- 
+test(enumeration) :-
   Enumerated_Lists = [
     (
       [],

@@ -23,7 +23,7 @@ byte(Byte),
 range(Min, Max),
 any.
 
-Also note that a finite automaton is non-determinisitic unless E = []. 
+Also note that a finite automaton is non-determinisitic unless E = [].
 
 @author Sally Soul
 @license MIT
@@ -46,8 +46,8 @@ ast_nfa(Root_Node, NFA) :-
   Partial_NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions),
 
   % We use ast_nfa_r to recursivley build the NFA from the AST
-  % Each recurrence returns produces an nfa (a sub nfa, if you will) that 
-  % is composed of a subset of the partial NFA. Each sub-NFA can 
+  % Each recurrence returns produces an nfa (a sub nfa, if you will) that
+  % is composed of a subset of the partial NFA. Each sub-NFA can
   % be refered to by a starting state, and an ending state
 
   Start_State = 0,
@@ -56,8 +56,8 @@ ast_nfa(Root_Node, NFA) :-
 
   % Start our recursive construction
   ast_nfa_r(
-    Root_Node, 
-    Partial_NFA, 
+    Root_Node,
+    Partial_NFA,
     (Start_State, Final_State),
     (Next_Available_State, _)
   ),
@@ -69,8 +69,8 @@ ast_nfa(Root_Node, NFA) :-
 
 %
 % The following are ast_char_r definitions for each ast node type
-% I attempt to document the goal including a ASCII diagram of the 
-% resulting state machine. For example: 
+% I attempt to document the goal including a ASCII diagram of the
+% resulting state machine. For example:
 % A -- x --> B
 % This reads, from state A, transition to State B on input x
 
@@ -146,7 +146,7 @@ ast_nfa_r(
 
   add_nb_set(Sub_Ast_L_Start, NFA_States),
   Next_For_L is Sub_Ast_L_Start + 1,
-  
+
   ast_nfa_r(
     Sub_Ast_L,
     Partial_NFA,
@@ -196,7 +196,7 @@ ast_nfa_r(
 
   ast_nfa_max(
     (Sub_Ast, Diff),
-    Partial_NFA, 
+    Partial_NFA,
     (Min_Final, Final_State),
     (Min_Used_Until, Used_Until_State)
   ).
@@ -244,7 +244,7 @@ ast_nfa_max(
 ) :-
 
   (_, _, NFA_Empty_Transitions) = Partial_NFA,
-  
+
   ast_nfa_r(
     Sub_Ast,
     Partial_NFA,
@@ -274,7 +274,7 @@ ast_nfa_max(
     Start_State,
     (First_A_State, Used_Until_State)
   ).
- 
+
 ast_nfa_max_r(
   (_, 0, _),
   _Partial_NFA,
@@ -288,7 +288,7 @@ ast_nfa_max_r(
   Start_State,
   (Next_State, Used_Until_State)
 ) :-
-  
+
   (_, _, NFA_Empty_Transitions) = Partial_NFA,
 
   ast_nfa_r(

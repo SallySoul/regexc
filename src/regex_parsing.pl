@@ -6,7 +6,7 @@
 
 :- use_module(regex_ast).
 
-%! print_errors(+Input:string, +Errors:list) is det. 
+%! print_errors(+Input:string, +Errors:list) is det.
 %
 % This predicate prints out the error list in a nicely formated way
 %
@@ -23,7 +23,7 @@ write_single_arrow(Output_Stream, N) :-
   M is N - 1,
   write_single_arrow(Output_Stream, M).
 
-%! print_errors(+Input:string, +Error:list) is det. 
+%! print_errors(+Input:string, +Error:list) is det.
 %
 % This predicate prints out the error in a nicely formated way
 %
@@ -42,7 +42,7 @@ print_error(Output_Stream, _Input, error(Message)) :-
 
 %! process_regex_string
 %
-% This is used by parse_regex_strings to both transform the string into an AST, 
+% This is used by parse_regex_strings to both transform the string into an AST,
 % and to handle formatting the errors.
 %
 process_regex_string(_Output_Stream, Regex_String, (Asts, Error_Flag), ([Ast | Asts], Error_Flag)) :-
@@ -72,15 +72,15 @@ handle_asts(_, Asts, Ast, Error_Flag, Error_Flag) :-
 % and formats the errors into an output_stream.
 %
 parse_regex_strings(
-  Output_Stream, 
-  Regex_Strings, 
-  Ast, 
+  Output_Stream,
+  Regex_Strings,
+  Ast,
   Error_Found_Flag
 ) :-
   foldl(
-    process_regex_string(Output_Stream), 
-    Regex_Strings, 
-    ([], false), 
+    process_regex_string(Output_Stream),
+    Regex_Strings,
+    ([], false),
     (Asts, Parse_Error_Flag)
   ),
 
@@ -89,7 +89,7 @@ parse_regex_strings(
 :- begin_tests(regex_parsing).
 
 test_write_single_arrow(Num, Correct_Arrow) :-
-  with_output_to(string(Arrow), 
+  with_output_to(string(Arrow),
     assertion(write_single_arrow(current_output, Num))
   ),
   assertion(Arrow = Correct_Arrow).
@@ -114,7 +114,7 @@ test(write_single_arrow) :-
   ).
 
 test_print_error(Error, Correct_Output) :-
-  with_output_to(string(Arrow), 
+  with_output_to(string(Arrow),
     print_error(current_output, "aaaa", Error)
   ),
   assertion(Arrow = Correct_Output).
@@ -137,7 +137,7 @@ test(print_error) :-
   forall(member((Error, Correct_Output), Arrows),
     test_print_error(Error, Correct_Output)
   ).
-  
+
 test_parse_regex_strings(Strings, Correct_Output, Correct_Ast, Correct_Error_Flag) :-
   with_output_to(string(Output),
       parse_regex_strings(
@@ -158,7 +158,7 @@ test(parser_regex_strings) :-
       "",
       ast_char(a),
       false
-    ), 
+    ),
     (
       ["a", "b"],
       "",
@@ -169,36 +169,36 @@ test(parser_regex_strings) :-
       ["(a", "b"],
       "ERROR: No closing parenthesis at 0\n(a\n^\n",
       ast_char(b),
-      true 
+      true
     ),
     (
       ["a|b", "c?"],
       "",
       ast_or(ast_or(ast_char(a), ast_char(b)), ast_occurance(ast_char(c), none, some(1))),
-      false 
+      false
     ),
     (
       ["t"],
       "ERROR: Could not parse string at 0\nt\n^\nERROR: No strings were parsed successfully\n",
       Unknown,
-      true 
+      true
     ),
     (
       ["t", "a"],
       "ERROR: Could not parse string at 0\nt\n^\n",
       ast_char(a),
-      true 
+      true
     ),
     (
       [],
       "ERROR: No strings were parsed successfully\n",
       Unknown,
-      true 
+      true
     )
 
   ],
   forall(member((Strings, Output, Ast, Error_Flag), Inputs),
-    test_parse_regex_strings(Strings, Output, Ast, Error_Flag) 
+    test_parse_regex_strings(Strings, Output, Ast, Error_Flag)
   ).
 
 :- end_tests(regex_parsing).

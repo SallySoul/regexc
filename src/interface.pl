@@ -97,7 +97,7 @@ parse_args(Args, Processed_Opts) :-
 
   % Grab all the raw regex input and turn it into a list of strings
   process_regexes(Opts, Regex_Strings, Remaining_Args),
-  
+
   % Grab all the
   Processed_Opts = (Regex_Strings, Remaining_Args).
 
@@ -109,24 +109,24 @@ handle_error_flag(true, Message) :- !,
 handle_error_flag(false, _Message) :- !.
 
 write_ast_dot(Opts, Ast) :-
-  member(ast_dot(Path), Opts), atom(Path), !, 
+  member(ast_dot(Path), Opts), atom(Path), !,
   util:write_to_file(regex:ast_to_dot(Ast), Path).
 write_ast_dot(_, _).
 
 write_nfa_dot(Opts, Nfa) :-
-  member(nfa_dot(Path), Opts), atom(Path), !, 
+  member(nfa_dot(Path), Opts), atom(Path), !,
   util:write_to_file(statemachine:nfa_to_dot(Nfa), Path).
 write_nfa_dot(_, _).
 
 main(Args) :-
   parse_args(Args, (Regex_Strings, Remaining_Opts)),
 
-  % Parse all the regex strings into Asts, 
+  % Parse all the regex strings into Asts,
   % halt if errors are found
   % dump
   regex_parsing:parse_regex_strings(
     user_output,
-    Regex_Strings, 
+    Regex_Strings,
     Ast,
     Parse_Error_Flag
   ),
@@ -134,7 +134,7 @@ main(Args) :-
 
   handle_error_flag(
     Parse_Error_Flag,
-    "Exiting due to above Errors..." 
+    "Exiting due to above Errors..."
   ),
 
   % Create NFA from AST, write to file if requested

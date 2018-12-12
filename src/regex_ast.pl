@@ -24,22 +24,22 @@ Its role is to relate strings to (abstract syntax trees, error list) tuples.
 %
 %   @arg Regex This is is the string representation of the regular expression
 %   @arg Root_Ast_Node This is the ast_* node representation of the regular expression, modulo errors
-%   @arg Errors List of errors (reasons) why string, root are not the same. 
-string_ast(String, Root_Node, Errors) :- 
+%   @arg Errors List of errors (reasons) why string, root are not the same.
+string_ast(String, Root_Node, Errors) :-
   % We /* use  */the atom-as-char, let swipl deal with specifics
   % So this takes string, relates it to a list of chars / their positon
-  string_chars(String, Chars), 
+  string_chars(String, Chars),
   util:enumeration(Chars, Enumerated_Chars),
- 
+
   % Here we relate the list of chars to the grammer
   phrase(gram_expr(Root_Node, Errors), Enumerated_Chars).
 
 gram_expr(Ast_Node, Errors) --> gram_or(Ast_Node, Errors).
 
 gram_or(Ast_Node, Errors) --> gram_concat(Ast_Node, Errors).
-gram_or(ast_or(Ast_Node1, Ast_Node2), All_Errors) --> 
-  gram_concat(Ast_Node1, Errors1), 
-  [('|', _)], 
+gram_or(ast_or(Ast_Node1, Ast_Node2), All_Errors) -->
+  gram_concat(Ast_Node1, Errors1),
+  [('|', _)],
   gram_or(Ast_Node2, Errors2),
   { append(Errors1, Errors2, All_Errors)}.
 gram_or(ast_or(Ast_Node1, ast_error), All_Errors) -->
@@ -48,8 +48,8 @@ gram_or(ast_or(Ast_Node1, ast_error), All_Errors) -->
   { append(Errors, [error("Unexpected OR operator", some(Pos))], All_Errors)}.
 
 gram_concat(Ast_Node, Errors) --> gram_occurance(Ast_Node, Errors).
-gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) --> 
-  gram_occurance(Ast_Node1, Errors1), 
+gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) -->
+  gram_occurance(Ast_Node1, Errors1),
   gram_concat(Ast_Node2, Errors2),
   { append(Errors1, Errors2, All_Errors)}.
 
@@ -103,14 +103,14 @@ gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
 gram_single(ast_char(X), []) --> [ (X, _) ], { char(X) }.
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
 gram_single(Ast_Node, Errors) --> [('(', _)], gram_expr(Ast_Node, Errors), [(')', _)].
-gram_single(Ast_Node, All_Errors) --> 
-  [('(', Pos)], 
+gram_single(Ast_Node, All_Errors) -->
+  [('(', Pos)],
   gram_expr(Ast_Node, Errors), ! ,
   {
     append(Errors, [error("No closing parenthesis", some(Pos))], All_Errors)
   }.
-gram_single(ast_error, All_Errors) --> 
-  [('(', Pos)], !, 
+gram_single(ast_error, All_Errors) -->
+  [('(', Pos)], !,
   {
     All_Errors = [error("No closing parenthesis", some(Pos))]
   }.
@@ -125,7 +125,7 @@ ast_to_dot_r(Stream, ast_wildcard, Current_Index, Next_Index) :-
   format(Stream, "\t~d [label=\"~d: wildcard\"];~n", [Current_Index, Current_Index]).
 
 ast_to_dot_r(Stream, ast_char(C), Current_Index, Next_Index) :-
-  Next_Index is Current_Index + 1, 
+  Next_Index is Current_Index + 1,
   format(Stream, "\t~d [label=\"~d: char(~a)\"];~n", [Current_Index, Current_Index, C]).
 
 ast_to_dot_r(Stream, ast_occurance(Sub_Ast, Min, Max), Current_Index, Next_Index) :-
@@ -186,9 +186,9 @@ char('c').
 :- begin_tests(regex_ast).
 
 % A correct string has a 1-1 relationship with some Ast
-test_correct_string(Correct_String, Ast) :- 
+test_correct_string(Correct_String, Ast) :-
   bagof(Possible_Ast, string_ast(Correct_String, Possible_Ast, Errors), Asts),
-  % There is only one Ast. 
+  % There is only one Ast.
   % TODO: I think maybe there shouldn't be any choice points here?
   % I think pltest has the easy facility to test a deterministic function
   assertion(Asts = [Ast]),
@@ -199,7 +199,7 @@ test_correct_string(Correct_String, Ast) :-
 % An incorrection sting will have some ast artifact, and a non-emtpy list of errors.
 test_incorrect_string(Incorrect_String, Ast, Errors) :-
   bagof(
-    (Possible_Ast, Possible_Errors), 
+    (Possible_Ast, Possible_Errors),
     string_ast(Incorrect_String, Possible_Ast, Possible_Errors),
     Outputs
   ),
@@ -207,44 +207,44 @@ test_incorrect_string(Incorrect_String, Ast, Errors) :-
   % I think.
   assertion(Outputs = [(Ast, Errors)]).
 
-test(correct_strings) :- 
+test(correct_strings) :-
   Correct_Strings= [
     (
-      "a", 
+      "a",
       ast_char(a)),
     (
-      "b", 
+      "b",
       ast_char(b)),
     (
-      ".", 
+      ".",
       ast_wildcard
     ),
     (
-      "a|b", 
+      "a|b",
       ast_or(ast_char(a), ast_char(b))
     ),
     (
-      "a*", 
+      "a*",
       ast_occurance(ast_char(a), none, none)
     ),
     (
-      "a?", 
+      "a?",
       ast_occurance(ast_char(a), none, some(1))
     ),
     (
-      "a+", 
+      "a+",
       ast_occurance(ast_char(a), some(1), none)
     ),
     (
-      "ab", 
+      "ab",
       ast_concat(ast_char(a), ast_char(b))
     ),
     (
-      "ab|bc", 
+      "ab|bc",
       ast_or(ast_concat(ast_char(a), ast_char(b)), ast_concat(ast_char(b), ast_char(c)))
     ),
     (
-      "(ab)*", 
+      "(ab)*",
       ast_occurance(ast_concat(ast_char(a), ast_char(b)), none, none)
     ),
     (
@@ -272,7 +272,7 @@ test(correct_strings) :-
     assertion(test_correct_string(Correct_Input, Correct_Output))
   ).
 
-test(incorrect_strings) :- 
+test(incorrect_strings) :-
   Incorrect_Strings = [
     (
       "(",
