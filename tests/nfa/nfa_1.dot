@@ -1,0 +1,7 @@
+digraph NFA {
+	0;
+	1;
+	0 -> 1 [label="a"];
+	1 [shape=doublecircle];
+	0 [shape=box];
+}

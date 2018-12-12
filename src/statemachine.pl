@@ -339,7 +339,7 @@ final_states_to_dot(Stream, NFA_Final_States) :-
 start_state_to_dot(Stream, N) :-
   format(Stream, "\t~w [shape=box];~n", [N]).
 
-nfa_to_dot(Stream, NFA) :-
+nfa_to_dot(NFA, Stream) :-
   NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States),
   writeln(Stream, "digraph NFA {"),
   states_to_dot(Stream, NFA_States),
@@ -349,8 +349,43 @@ nfa_to_dot(Stream, NFA) :-
   start_state_to_dot(Stream, Start_State),
   writeln(Stream, "}").
 
-nfa_dot_to_file(Path, Nfa) :-
-  absolute_file_name(Path, Absolute_Path),
-  open(Absolute_Path, write, Nfa_Dot_File),
-  statemachine:nfa_to_dot(Nfa_Dot_File, Nfa),
-  close(Nfa_Dot_File).
+:- begin_tests(statemachine).
+
+test_dot_output(String, Correct_Dot_File) :-
+  regex_ast:string_ast(String, Ast, Errors),
+  assertion(Errors = []),
+	ast_nfa(Ast, Nfa),
+
+  tmp_file_stream(text, Test_File, TO), close(TO),
+  util:write_to_file(nfa_to_dot(Nfa), Test_File),
+  util:file_diff(Test_File, Correct_Dot_File, Diff),
+
+  string_length(Diff, Diff_Length),
+  assertion(Diff_Length = 0),
+  (Diff = "" ; format("~n~w~n", [Diff])).
+
+test(ast_to_string) :-
+  Dot_Files = [
+    (
+      "a",
+      "tests/nfa/nfa_1.dot"
+    ),
+    (
+      "a|b|c",
+      "tests/nfa/nfa_2.dot"
+    ),
+    (
+      "(a|b|c){2,3}abc+",
+      "tests/nfa/nfa_3.dot"
+    ),
+    (
+      "a*b+c?(.|(ca)){3,7}",
+      "tests/nfa/nfa_4.dot"
+    )
+  ],
+  forall(member((String, Correct_Dot_File), Dot_Files),
+    assertion(test_dot_output(String, Correct_Dot_File))
+  ).
+
+:
+:- end_tests(statemachine).
