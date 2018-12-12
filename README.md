@@ -47,6 +47,10 @@ If you are adding a new module, please add it to `src/load.pl`.
 
 ## Design Decisions
 
+### SWI Prolog Only
+
+I am not concerned with compatability for other prolog distrubtions.
+
 ### Argument Parsing
 	
 SWI Prolog provides an [optparse](http://www.swi-prolog.org/pldoc/man?section=optparse) module that is
@@ -56,11 +60,13 @@ message and check the list of inputs to the tool.
 
 ### Testing
 
-SWI Prolog includes a unit test package, [plunit](http://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/plunit.html%27).
+SWI Prolog includes a unit test package, [plunit](http://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/plunit.html%27)).
 
-For now, the best option is consulting the load file and running
+There are unit tests in every module. In addition, there is module that includes integration tests.
+For now please run the make target.
+
 ```
-?- show_coverage(run_tests).
+$ make test
 ```
 
 ## Future Work
