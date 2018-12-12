@@ -95,18 +95,12 @@ handle_error_flag(false, _Message) :- !.
 
 write_ast_dot(Opts, Ast) :-
   member(ast_dot(Path), Opts), atom(Path), !, 
-  absolute_file_name(Path, Absolute_Path),
-  open(Absolute_Path, write, Ast_Dot_File),
-  regex:ast_to_dot(Ast_Dot_File, Ast),
-  close(Ast_Dot_File).
+  util:write_to_file(regex:ast_to_dot(Ast), Path).
 write_ast_dot(_, _).
 
 write_nfa_dot(Opts, Nfa) :-
   member(nfa_dot(Path), Opts), atom(Path), !, 
-  absolute_file_name(Path, Absolute_Path),
-  open(Absolute_Path, write, Nfa_Dot_File),
-  statemachine:nfa_to_dot(Nfa_Dot_File, Nfa),
-  close(Nfa_Dot_File).
+  util:write_to_file(statemachine:nfa_to_dot(Nfa), Path).
 write_nfa_dot(_, _).
 
 main(Args) :-
