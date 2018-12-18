@@ -95,15 +95,15 @@ gram_matching_symbol(Ast, []) -->
   [('D', _)],
   {
     char_code('0', Min_Code),
-    char_code('1', Max_Code),
-    Ast = ast_node(ast_range(Min_Code, Max_Code))
+    char_code('9', Max_Code),
+    Ast = ast_not(ast_range(Min_Code, Max_Code))
   }.
 
 gram_matching_symbol(Ast, []) -->
   [('d', _)],
   {
     char_code('0', Min_Code),
-    char_code('1', Max_Code),
+    char_code('9', Max_Code),
     Ast = ast_range(Min_Code, Max_Code)
   }.
 
@@ -209,7 +209,7 @@ gram_class_range_symbol(Code, Errors) -->
   gram_control_symbol(ast_range(Code, Code), Errors).
 
 gram_class_range_symbol('\\', Errors) -->
-  [('\\', Pos)],
+  [('\\', Pos)], !,
   {
     Errors = [some("Unexpected '\\', was not followed by a control symbol", some(Pos))]
   }.
@@ -278,23 +278,30 @@ gram_class_members(ast_or(Ast_L, Ast_R), All_Errors) -->
 gram_class_members(Ast, Errors) -->
   gram_class_member(Ast, Errors).
 
-/*
+
 gram_symbol(Ast, Errors) -->
-  [('\\'), _],
-  gram_matching_symbol(Ast, Errors).
+  [('\\', _)],
+  (gram_matching_symbol(Ast, Errors) ; gram_control_symbol(Ast, Errors) ; gram_operator_symbol(Ast, Errors)).
 
-gram_symbol(Ast, Errors)
-
+  gram_symbol(ast_error, Errors) -->
+  [('\\', Pos)],
+  {
+    Errors = [error("Wut '\\'", Pos)]
+  }.
   
-gram_symbol(Ast, Errors) -->
-  [(C, _)],
-  char_code
 
-*/
+
+% TODO catch error
+
+gram_symbol(ast_range(Code, Code), []) -->
+  any_char(C, _),
+  {
+    char_code(C, Code)
+  }.
 
 %gram_single(Ast, Errors) --> gram_range_section(Ast, Errors).
 gram_single(Ast, Errors) --> gram_class_definition(Ast, Errors).
-gram_single(ast_char(X), []) --> [ (X, _) ], { char(X) }.
+gram_single(Ast, Errors) --> gram_symbol(Ast, Errors).
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
 gram_single(Ast_Node, Errors) --> [('(', _)], gram_expr(Ast_Node, Errors), [(')', _)].
 gram_single(Ast_Node, All_Errors) -->
