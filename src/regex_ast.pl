@@ -79,27 +79,221 @@ gram_occurance_fields(Min, none, Errors) -->
     Errors = [ error("Expected digit or ','", some(Pos))]
   }.
 
+% TODO: really? I think this can be better?
 any_char(C, Pos) -->
   [(C, Pos)].
 
-  /*
-gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
-  gram_single(Ast_Node, Errors),
-  [('{', _)],
-  maybe_integer(Min),
-  [(',', _)],
+%
+% Match symbols are syntactic sugar for some common ranges:
+% \d => [0-9]
+% \D => [^0-9]
+% \a => [a-z]
+% \A => [A-Z]
+% TODO, dunno if I like those leter ranges, seems wrong
+%
+gram_matching_symbol(Ast, []) -->
+  [('D', _)],
   {
-    append(Errors, [error("No closing bracket", some(Pos))], All_Errors)
+    char_code('0', Min_Code),
+    char_code('1', Max_Code),
+    Ast = ast_node(ast_range(Min_Code, Max_Code))
   }.
 
-gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
-  gram_single(Ast_Node, Errors),
-  [('{', _)],
+gram_matching_symbol(Ast, []) -->
+  [('d', _)],
   {
-    All_Errors = [error("No closing parenthesis", some(Pos))]
+    char_code('0', Min_Code),
+    char_code('1', Max_Code),
+    Ast = ast_range(Min_Code, Max_Code)
   }.
+
+gram_matching_symbol(Ast, []) -->
+  [('a', _)],
+  {
+    char_code('a', Min_Code),
+    char_code('z', Max_Code),
+    Ast = ast_range(Min_Code, Max_Code)
+  }.
+
+gram_matching_symbol(Ast, []) -->
+  [('A', _)],
+  {
+    char_code('A', Min_Code),
+    char_code('Z', Max_Code),
+    Ast = ast_range(Min_Code, Max_Code)
+  }.
+
+%
+% Control symbols are chacters that
+% foundational to the syntax of the regexes.
+% They must always be escaped with a '\',
+% Including in class definitions
+%
+control_symbols(S) :-
+  S = [
+    '\\', '(', ')', '[', ']', '-'
+  ].
+
+gram_control_symbol(ast_range(Code, Code), []) -->
+  [(C, _)],
+  {
+    control_symbols(S),
+    member(C, S),
+    char_code(C, Code)
+  }.
+
+
+%
+% Operator symbols are like
+% Special symbols, howeer they only need to be escaped outside
+% class definitions
+%
+operator_symbols(S) :-
+  S = [
+    '+', '*', '?', '{', '}', '|'
+  ].
+
+gram_operator_symbol(ast_range(Code, Code), []) -->
+  [(C, _)],
+  {
+    operator_symbols(S),
+    member(C, S),
+    char_code(C, Code)
+  }.
+
+%
+% Out side of classes, we must '\' escape control and operator symbols
+% And we can freely use the matching symbols
+%
+gram_special_symbol(Ast, Errors) -->
+  [('\\', _)],
+  (gram_control_symbol(Ast, Errors) ; 
+   gram_operator_symbol(Ast, Errors) ;
+   gram_matching_symbol(Ast, Errors)).
+
+gram_special_symbol(ast_error, Errors) -->
+  [('\\', Pos)], !,
+  {
+    Errors = [some("Unexpected '\\', was not followed by a special symbol", some(Pos))]
+  }.
+
+%
+% Inside class defintions, for non range specifiers
+% we only need to '\' escape special symbols and matching chars
+% Since non_range symbols are a super set of range symbols, we 
+% cut here if '\' is found
+%
+gram_class_non_range_symbols(Ast, Errors) -->
+  [('\\', _)], !,
+  (gram_control_symbol(Ast, Errors) ;
+   gram_matching_symbol(Ast, Errors)).
+
+gram_class_non_range_symbol(ast_error, Errors) -->
+  [('\\', Pos)],
+  {
+    Errors = [error("Unexpected '\\', was not followed by a control or matching symbol", some(Pos))]
+  }.
+
+gram_class_non_range_symbol(ast_range(Code, Code), []) -->
+  any_char(C, _),
+  {
+    char_code(C, Code)
+  }.
+
+%
+% In class definitions
+% range symbols cannot include matching symbols
+%
+gram_class_range_symbol(Code, Errors) -->
+  [('\\', _)],
+  gram_control_symbol(ast_range(Code, Code), Errors).
+
+gram_class_range_symbol('\\', Errors) -->
+  [('\\', Pos)],
+  {
+    Errors = [some("Unexpected '\\', was not followed by a control symbol", some(Pos))]
+  }.
+
+gram_class_range_symbol(Code, []) -->
+  any_char(C, _),
+  {
+    char_code(C, Code)
+  }.
+
+%
+% Class definitions are [^C], or [C]
+% Where C is a sequence of class members
+% Note that operator symbols will be taken literally within [...]
+% However special characters need to be escaped with a '\..'
+%
+gram_class_definition(ast_not(Ast), Errors) -->
+  [('[', _), ('^', _)],
+  gram_class_members(Ast, Errors),
+  [(']', _)].
+
+gram_class_definition(Ast, Errors) -->
+  [('[', _)],
+  gram_class_members(Ast, Errors),
+  [(']', _)].
+
+%
+% A class member is:
+% any symbol
+% Note that operator symbols will be taken literally within [...]
+% However special characters need to be escaped with a '\..'
+%
+% A range of symbols: a-z
+%
+gram_class_member(ast_range(Min_Code, Max_Code), All_Errors) -->
+  gram_class_range_symbol(Min_Code, Errors_Min),
+  [('-', _)],
+  gram_class_range_symbol(Max_Code, Errors_Max),
+  {
+    append(Errors_Min, Errors_Max, All_Errors)
+  }.
+
+% TODO: I think I can save work here:
+gram_class_member(ast_error, All_Errors) -->
+  gram_class_range_symbol(_Min_Code, Errors),
+  [('-', Pos)], !,
+  {
+    append( 
+      Errors, 
+      [error(
+        "Unexpected '-', should be followed by a symbol, or preceeded by a '\\'", 
+        some(Pos))],
+      All_Errors)
+  }.
+
+gram_class_member(Ast, Errors) -->
+  gram_class_non_range_symbol(Ast, Errors).
+
+gram_class_members(ast_or(Ast_L, Ast_R), All_Errors) -->
+  gram_class_member(Ast_L, Errors_L),
+  gram_class_members(Ast_R, Errors_R),
+  {
+    append(Errors_L, Errors_R, All_Errors)
+  }.
+
+gram_class_members(Ast, Errors) -->
+  gram_class_member(Ast, Errors).
+
+/*
+gram_symbol(Ast, Errors) -->
+  [('\\'), _],
+  gram_matching_symbol(Ast, Errors).
+
+gram_symbol(Ast, Errors)
+
+  
+gram_symbol(Ast, Errors) -->
+  [(C, _)],
+  char_code
+
 */
 
+%gram_single(Ast, Errors) --> gram_range_section(Ast, Errors).
+gram_single(Ast, Errors) --> gram_class_definition(Ast, Errors).
 gram_single(ast_char(X), []) --> [ (X, _) ], { char(X) }.
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
 gram_single(Ast_Node, Errors) --> [('(', _)], gram_expr(Ast_Node, Errors), [(')', _)].
@@ -127,6 +321,17 @@ ast_to_dot_r(Stream, ast_wildcard, Current_Index, Next_Index) :-
 ast_to_dot_r(Stream, ast_char(C), Current_Index, Next_Index) :-
   Next_Index is Current_Index + 1,
   format(Stream, "\t~d [label=\"~d: char(~a)\"];~n", [Current_Index, Current_Index, C]).
+
+ast_to_dot_r(Stream, ast_range(Min_Code, Max_Code), Current_Index, Next_Index) :-
+  Next_Index is Current_Index + 1,
+  char_code(Min, Min_Code), char_code(Max, Max_Code),
+  format(Stream, "\t~d [label=\"~d: range(~w - ~w)\"];~n", [Current_Index, Current_Index, Min, Max]).
+
+ast_to_dot_r(Stream, ast_not(Sub_Ast), Current_Index, Next_Index) :-
+  Sub_Ast_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_Ast, Sub_Ast_Index, Next_Index),
+  format(Stream, "\t~d [label=\"~d: not\"];~n", [Current_Index, Current_Index]),
+  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_Index]).
 
 ast_to_dot_r(Stream, ast_occurance(Sub_Ast, Min, Max), Current_Index, Next_Index) :-
   Sub_Ast_Index is Current_Index + 1,
@@ -182,7 +387,7 @@ digit(D) -->
 char('a').
 char('b').
 char('c').
-
+/*
 :- begin_tests(regex_ast).
 
 % A correct string has a 1-1 relationship with some Ast
@@ -352,3 +557,5 @@ test(ast_to_string) :-
   ).
 
 :- end_tests(regex_ast).
+
+*/

@@ -21,12 +21,13 @@ manager of choice. I'm on macOS so I used [brew](https://brew.sh).
 brew install swi-prolog
 ```
 
-To run the documenation server you should be in the `src` directory.
+To run the documenation server, use the make target.
 
 ```
-cd src
-swipl -f documentation_server.pl
+$ make doc_server
 ```
+
+This will launch a swipl instance. Use the `halt/0` predicate when you want to stop the server.
 
 While working on the source code, I recomend starting a SWI-Prolog session with that consults the load module.
 Whenever you want to consult your changes, run [make/0](http://www.swi-prolog.org/pldoc/doc_for?object=make/0).
@@ -54,9 +55,9 @@ I am not concerned with compatability for other prolog distrubtions.
 ### Argument Parsing
 	
 SWI Prolog provides an [optparse](http://www.swi-prolog.org/pldoc/man?section=optparse) module that is
-modeled after python's own opt parse. These modules provides the minimum of what we would expect from 
-an argument parsing library in any language: one specification can be used to both generate a help 
-message and check the list of inputs to the tool.
+modeled after python's own optparse. This module provides the minimum of what I would expect from 
+an argument parsing library in any language: one specification can be used to generate both a help 
+message and parse the arguments. 
 
 ### Testing
 
