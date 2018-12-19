@@ -25,14 +25,20 @@ Its role is to relate strings to (abstract syntax trees, error list) tuples.
 %   @arg Regex This is is the string representation of the regular expression
 %   @arg Root_Ast_Node This is the ast_* node representation of the regular expression, modulo errors
 %   @arg Errors List of errors (reasons) why string, root are not the same.
-string_ast(String, Root_Node, Errors) :-
+string_ast(String, Ast, Errors) :-
   % We /* use  */the atom-as-char, let swipl deal with specifics
   % So this takes string, relates it to a list of chars / their positon
   string_chars(String, Chars),
   util:enumeration(Chars, Enumerated_Chars),
 
   % Here we relate the list of chars to the grammer
-  phrase(gram_expr(Root_Node, Errors), Enumerated_Chars).
+  phrase(gram_expr(Ast, Errors), Enumerated_Chars).
+
+string_to_gram(String, Goal) :-
+  string_chars(String, Chars),
+  util:enumeration(Chars, Enumerated_Chars),
+  phrase(Goal, Enumerated_Chars).
+
 
 gram_expr(Ast_Node, Errors) --> gram_or(Ast_Node, Errors).
 
@@ -54,6 +60,14 @@ gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) -->
   { append(Errors1, Errors2, All_Errors)}.
 
 
+%
+% Finite statemachines allow us to specify that a sequence of an expression
+% can occur, with no or some finite minumum number of occurances
+% and a finite or unbounded length for the sequence.
+%
+% There is syntactic sugar for the common cases, like * -> {,},
+% However we also want to able to specify other ranges like {3,6}
+%
 gram_occurance(Ast_Node, Errors) --> gram_single(Ast_Node, Errors).
 gram_occurance(ast_occurance(Ast_Node, none, none), Errors) --> gram_single(Ast_Node, Errors), [('*', _)].
 gram_occurance(ast_occurance(Ast_Node, none, some(1)), Errors) --> gram_single(Ast_Node, Errors), [('?', _)].
@@ -78,6 +92,32 @@ gram_occurance_fields(Min, none, Errors) -->
   {
     Errors = [ error("Expected digit or ','", some(Pos))]
   }.
+
+
+%
+% In order to parse occurances we need parse integers
+%
+maybe_integer(some(I))--> integer(I).
+maybe_integer(none) --> [].
+
+integer(I) -->
+  digit(D0),
+  digits(D),
+  { number_chars(I, [D0|D])}.
+
+digits([D|T]) -->
+  digit(D), !,
+  digits(T).
+digits([]) -->
+  [].
+
+digit(D) -->
+  [(D, _)],
+  { char_type(D, digit)}.
+
+
+
+
 
 % TODO: really? I think this can be better?
 any_char(C, Pos) -->
@@ -183,7 +223,7 @@ gram_special_symbol(ast_error, Errors) -->
 % Since non_range symbols are a super set of range symbols, we 
 % cut here if '\' is found
 %
-gram_class_non_range_symbols(Ast, Errors) -->
+gram_class_non_range_symbol(Ast, Errors) -->
   [('\\', _)], !,
   (gram_control_symbol(Ast, Errors) ;
    gram_matching_symbol(Ast, Errors)).
@@ -192,6 +232,17 @@ gram_class_non_range_symbol(ast_error, Errors) -->
   [('\\', Pos)],
   {
     Errors = [error("Unexpected '\\', was not followed by a control or matching symbol", some(Pos))]
+  }.
+
+gram_class_non_range_symbol(C, Errors) -->
+  any_char(C, Pos),
+  {
+    control_symbols(Controls),
+    member(C, Controls),
+    Errors = [
+      error(
+        "Control characters must be in class definitions escaped with a '\' in order to be matched against", 
+        some(Pos))]
   }.
 
 gram_class_non_range_symbol(ast_range(Code, Code), []) -->
@@ -212,6 +263,17 @@ gram_class_range_symbol('\\', Errors) -->
   [('\\', Pos)], !,
   {
     Errors = [some("Unexpected '\\', was not followed by a control symbol", some(Pos))]
+  }.
+
+gram_class_range_symbol(C, Errors) -->
+  any_char(C, Pos),
+  {
+    control_symbols(Controls),
+    member(C, Controls),
+    Errors = [
+      error(
+      "Control characters must be escaped with a '\' when used to specify a range", 
+        some(Pos))]
   }.
 
 gram_class_range_symbol(Code, []) -->
@@ -283,13 +345,20 @@ gram_symbol(Ast, Errors) -->
   [('\\', _)],
   (gram_matching_symbol(Ast, Errors) ; gram_control_symbol(Ast, Errors) ; gram_operator_symbol(Ast, Errors)).
 
-  gram_symbol(ast_error, Errors) -->
+gram_symbol(ast_error, Errors) -->
   [('\\', Pos)],
   {
     Errors = [error("Wut '\\'", Pos)]
   }.
-  
 
+gram_symbol(ast_error, Errors) -->
+  any_char(C, Pos),
+  {
+    operator_symbols(Operators),
+    control_symbols(Controls),
+    (member(C, Operators); member(C, Controls)),
+    Errors = [error("Control and operator characters must be escaped with a '\' in order to be matched against", some(Pos))]
+  }.
 
 % TODO catch error
 
@@ -372,28 +441,6 @@ combined_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
   Next_Ast = ast_or(Current_Ast, Last_Ast).
 
 
-maybe_integer(some(I))--> integer(I).
-maybe_integer(none) --> [].
-
-integer(I) -->
-  digit(D0),
-  digits(D),
-  { number_chars(I, [D0|D])}.
-
-digits([D|T]) -->
-  digit(D), !,
-  digits(T).
-digits([]) -->
-  [].
-
-digit(D) -->
-  [(D, _)],
-  { char_type(D, digit)}.
-
-%! char(C).
-char('a').
-char('b').
-char('c').
 /*
 :- begin_tests(regex_ast).
 
