@@ -150,7 +150,7 @@ test_parse_regex_strings(Strings, Correct_Output, Correct_Ast, Correct_Error_Fla
   assertion(Ast = Correct_Ast),
   assertion(Error_Flag = Correct_Error_Flag),
   assertion(Output = Correct_Output).
-
+/*
 test(parser_regex_strings) :-
   Inputs = [
     (
@@ -200,5 +200,5 @@ test(parser_regex_strings) :-
   forall(member((Strings, Output, Ast, Error_Flag), Inputs),
     test_parse_regex_strings(Strings, Output, Ast, Error_Flag)
   ).
-
+*/
 :- end_tests(regex_parsing).

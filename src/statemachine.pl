@@ -348,7 +348,7 @@ nfa_to_dot(NFA, Stream) :-
   final_states_to_dot(Stream, NFA_Final_States),
   start_state_to_dot(Stream, Start_State),
   writeln(Stream, "}").
-
+/*
 :- begin_tests(statemachine).
 
 test_dot_output(String, Correct_Dot_File) :-
@@ -388,3 +388,4 @@ test(ast_to_string) :-
   ).
 
 :- end_tests(statemachine).
+*/
