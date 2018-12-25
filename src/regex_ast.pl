@@ -224,8 +224,7 @@ gram_special_symbol(ast_error, Errors) -->
 % cut here if '\' is found
 %
 gram_class_non_range_symbol(Ast, Errors) -->
-  [('\\', _)], !,
-  (gram_control_symbol(Ast, Errors) ;
+  [('\\', _)], !, (gram_control_symbol(Ast, Errors) ;
    gram_matching_symbol(Ast, Errors)).
 
 gram_class_non_range_symbol(ast_error, Errors) -->
@@ -288,6 +287,7 @@ gram_class_range_symbol(Code, []) -->
 % Note that operator symbols will be taken literally within [...]
 % However special characters need to be escaped with a '\..'
 %
+
 gram_class_definition(ast_not(Ast), Errors) -->
   [('[', _), ('^', _)],
   gram_class_members(Ast, Errors),
@@ -297,6 +297,12 @@ gram_class_definition(Ast, Errors) -->
   [('[', _)],
   gram_class_members(Ast, Errors),
   [(']', _)].
+
+gram_class_definition(ast_error, Errors) -->
+  [('[', Pos), (']', _)],
+  {
+    Errors = [error("No members in class defintions", some(Pos))]
+  }.
 
 %
 % A class member is:
@@ -330,15 +336,28 @@ gram_class_member(ast_error, All_Errors) -->
 gram_class_member(Ast, Errors) -->
   gram_class_non_range_symbol(Ast, Errors).
 
+/*
 gram_class_members(ast_or(Ast_L, Ast_R), All_Errors) -->
   gram_class_member(Ast_L, Errors_L),
   gram_class_members(Ast_R, Errors_R),
   {
     append(Errors_L, Errors_R, All_Errors)
   }.
+*/
+
+maybe_class_members(First_Ast, First_Errors, Ast, Errors) -->
+  gram_class_member(New_Ast, New_Errors),
+  {
+    Next_Ast = ast_or(First_Ast, New_Ast),
+    append(First_Errors, New_Errors, Next_Errors)
+  },
+  maybe_class_members(Next_Ast, Next_Errors, Ast, Errors).
+
+maybe_class_members(Ast, Errors, Ast, Errors) --> [].
 
 gram_class_members(Ast, Errors) -->
-  gram_class_member(Ast, Errors).
+  gram_class_member(First_Ast, First_Errors),
+  maybe_class_members(First_Ast, First_Errors, Ast, Errors).
 
 
 gram_symbol(Ast, Errors) -->
