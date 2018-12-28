@@ -1,7 +1,7 @@
 digraph AST {
-	3 [label="3: char(a)"];
-	5 [label="5: char(b)"];
-	6 [label="6: char(c)"];
+	3 [label="3: range(a, a)"];
+	5 [label="5: range(b, b)"];
+	6 [label="6: range(c, c)"];
 	4 [label="4: Or"];
 	4 -> 5;
 	4 -> 6;
@@ -10,9 +10,9 @@ digraph AST {
 	2 -> 4;
 	1 [label="1: Occurance, some(2) - some(3)"];
 	1 -> 2;
-	8 [label="8: char(a)"];
-	10 [label="10: char(b)"];
-	12 [label="12: char(c)"];
+	8 [label="8: range(a, a)"];
+	10 [label="10: range(b, b)"];
+	12 [label="12: range(c, c)"];
 	11 [label="11: Occurance, some(1) - none"];
 	11 -> 12;
 	9 [label="9: Concat"];

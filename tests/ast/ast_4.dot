@@ -1,16 +1,16 @@
 digraph AST {
-	2 [label="2: char(a)"];
+	2 [label="2: range(a, a)"];
 	1 [label="1: Occurance, none - none"];
 	1 -> 2;
-	5 [label="5: char(b)"];
+	5 [label="5: range(b, b)"];
 	4 [label="4: Occurance, some(1) - none"];
 	4 -> 5;
-	8 [label="8: char(c)"];
+	8 [label="8: range(c, c)"];
 	7 [label="7: Occurance, none - some(1)"];
 	7 -> 8;
 	11 [label="11: wildcard"];
-	13 [label="13: char(c)"];
-	14 [label="14: char(a)"];
+	13 [label="13: range(c, c)"];
+	14 [label="14: range(a, a)"];
 	12 [label="12: Concat"];
 	12 -> 13;
 	12 -> 14;

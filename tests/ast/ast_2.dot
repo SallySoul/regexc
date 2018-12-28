@@ -1,7 +1,7 @@
 digraph AST {
-	1 [label="1: char(a)"];
-	3 [label="3: char(b)"];
-	4 [label="4: char(c)"];
+	1 [label="1: range(a, a)"];
+	3 [label="3: range(b, b)"];
+	4 [label="4: range(c, c)"];
 	2 [label="2: Or"];
 	2 -> 3;
 	2 -> 4;

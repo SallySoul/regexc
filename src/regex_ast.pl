@@ -430,9 +430,15 @@ ast_to_dot_r(Stream, ast_char(C), Current_Index, Next_Index) :-
   Next_Index is Current_Index + 1,
   format(Stream, "\t~d [label=\"~d: char(~a)\"];~n", [Current_Index, Current_Index, C]).
 
-ast_to_dot_r(Stream, ast_range(Min, Max), Current_Index, Next_Index) :-
+ast_to_dot_r(Stream, ast_range(Min_Code, Max_Code), Current_Index, Next_Index) :-
   Next_Index is Current_Index + 1,
-  format(Stream, "\t~d [label=\"~d: range(~a, ~a)\"];~n", [Current_Index, Current_Index, Min, Max]).
+  char_code(Min_Char, Min_Code),
+  char_code(Max_Char, Max_Code),
+  format(
+    Stream,
+    "\t~d [label=\"~d: range(~a, ~a)\"];~n",
+    [Current_Index, Current_Index, Min_Char, Max_Char]
+  ).
 
 ast_to_dot_r(Stream, ast_range(Min_Code, Max_Code), Current_Index, Next_Index) :-
   Next_Index is Current_Index + 1,
@@ -633,7 +639,7 @@ test(combined_asts) :-
   forall(member((Asts, Correct_Ast), Combined_Asts),
     assertion(test_combined_ast(Asts, Correct_Ast))
   ).
-/*
+
 test_dot_output(String, Correct_Dot_File) :-
   string_ast(String, Ast, Errors),
   assertion(Errors = []),
@@ -668,5 +674,5 @@ test(ast_to_string) :-
   forall(member((String, Correct_Dot_File), Dot_Files),
     assertion(test_dot_output(String, Correct_Dot_File))
   ).
-*/
+
 :- end_tests(regex_ast).
