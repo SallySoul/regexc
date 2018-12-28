@@ -32,7 +32,7 @@ string_ast(String, Ast, Errors) :-
   util:enumeration(Chars, Enumerated_Chars),
 
   % Here we relate the list of chars to the grammer
-  phrase(gram_expr(Ast, Errors), Enumerated_Chars).
+  phrase(gram_expr(Ast, Errors), Enumerated_Chars), !.
 
 string_to_gram(String, Goal) :-
   string_chars(String, Chars),
@@ -190,7 +190,7 @@ gram_control_symbol(ast_range(Code, Code), []) -->
 %
 operator_symbols(S) :-
   S = [
-    '+', '*', '?', '{', '}', '|'
+    '.', '+', '*', '?', '{', '}', '|'
   ].
 
 gram_operator_symbol(ast_range(Code, Code), []) -->
@@ -349,15 +349,6 @@ gram_class_member(ast_error, All_Errors) -->
 gram_class_member(Ast, Errors) -->
   gram_class_non_range_symbol(Ast, Errors).
 
-/*
-gram_class_members(ast_or(Ast_L, Ast_R), All_Errors) -->
-  gram_class_member(Ast_L, Errors_L),
-  gram_class_members(Ast_R, Errors_R),
-  {
-    append(Errors_L, Errors_R, All_Errors)
-  }.
-*/
-
 maybe_class_members(First_Ast, First_Errors, Ast, Errors) -->
   gram_class_member(New_Ast, New_Errors),
   {
@@ -388,6 +379,16 @@ gram_symbol(ast_error, Errors) -->
     Errors = [error("Wut '\\'", Pos)]
   }.
 
+% We don't want to vacuum up operator symbols
+gram_symbol(ast_range(Code, Code), []) -->
+  any_char(C, _),
+  {
+    operator_symbols(Operators),
+    member(C, Operators) -> fail; true,
+    char_code(C, Code)
+  }.
+
+/*
 gram_symbol(ast_error, Errors) -->
   any_char(C, Pos),
   {
@@ -396,19 +397,13 @@ gram_symbol(ast_error, Errors) -->
     (member(C, Operators); member(C, Controls)),
     Errors = [error("Control and operator characters must be escaped with a '\' in order to be matched against", some(Pos))]
   }.
-
+*/
 % TODO catch error
-
-gram_symbol(ast_range(Code, Code), []) -->
-  any_char(C, _),
-  {
-    char_code(C, Code)
-  }.
 
 %gram_single(Ast, Errors) --> gram_range_section(Ast, Errors).
 gram_single(Ast, Errors) --> gram_class_definition(Ast, Errors).
-gram_single(Ast, Errors) --> gram_symbol(Ast, Errors).
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
+gram_single(Ast, Errors) --> gram_symbol(Ast, Errors).
 gram_single(Ast_Node, Errors) --> [('(', _)], gram_expr(Ast_Node, Errors), [(')', _)].
 gram_single(Ast_Node, All_Errors) -->
   [('(', Pos)],
@@ -434,6 +429,10 @@ ast_to_dot_r(Stream, ast_wildcard, Current_Index, Next_Index) :-
 ast_to_dot_r(Stream, ast_char(C), Current_Index, Next_Index) :-
   Next_Index is Current_Index + 1,
   format(Stream, "\t~d [label=\"~d: char(~a)\"];~n", [Current_Index, Current_Index, C]).
+
+ast_to_dot_r(Stream, ast_range(Min, Max), Current_Index, Next_Index) :-
+  Next_Index is Current_Index + 1,
+  format(Stream, "\t~d [label=\"~d: range(~a, ~a)\"];~n", [Current_Index, Current_Index, Min, Max]).
 
 ast_to_dot_r(Stream, ast_range(Min_Code, Max_Code), Current_Index, Next_Index) :-
   Next_Index is Current_Index + 1,
@@ -478,7 +477,7 @@ combined_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
   Next_Ast = ast_or(Current_Ast, Last_Ast).
 
 
-/*
+
 :- begin_tests(regex_ast).
 
 % A correct string has a 1-1 relationship with some Ast
@@ -507,67 +506,89 @@ test(correct_strings) :-
   Correct_Strings= [
     (
       "a",
-      ast_char(a)),
+      ast_range(97, 97)
+    ),
     (
       "b",
-      ast_char(b)),
+      ast_range(98, 98)
+    ),
+    (
+      "😀",
+      ast_range(128512, 128512)
+    ),
     (
       ".",
       ast_wildcard
     ),
     (
       "a|b",
-      ast_or(ast_char(a), ast_char(b))
+      ast_or(ast_range(97, 97), ast_range(98, 98))
     ),
     (
       "a*",
-      ast_occurance(ast_char(a), none, none)
+      ast_occurance(ast_range(97, 97), none, none)
     ),
     (
       "a?",
-      ast_occurance(ast_char(a), none, some(1))
+      ast_occurance(ast_range(97, 97), none, some(1))
     ),
     (
       "a+",
-      ast_occurance(ast_char(a), some(1), none)
+      ast_occurance(ast_range(97, 97), some(1), none)
     ),
     (
       "ab",
-      ast_concat(ast_char(a), ast_char(b))
+      ast_concat(ast_range(97, 97), ast_range(98, 98))
     ),
     (
-      "ab|bc",
-      ast_or(ast_concat(ast_char(a), ast_char(b)), ast_concat(ast_char(b), ast_char(c)))
+      "ef|gh",
+      ast_or(ast_concat(ast_range(101, 101), ast_range(102, 102)), ast_concat(ast_range(103, 103), ast_range(104, 104)))
     ),
     (
       "(ab)*",
-      ast_occurance(ast_concat(ast_char(a), ast_char(b)), none, none)
+      ast_occurance(ast_concat(ast_range(97, 97), ast_range(98, 98)), none, none)
     ),
     (
       "a|b|c",
-      ast_or(ast_char(a), ast_or(ast_char(b), ast_char(c)))
+      ast_or(ast_range(97, 97), ast_or(ast_range(98, 98), ast_range(99, 99)))
     ),
     (
       "a{,}",
-      ast_occurance(ast_char(a), none, none)
+      ast_occurance(ast_range(97, 97), none, none)
     ),
     (
       "a{1,}",
-      ast_occurance(ast_char(a), some(1), none)
+      ast_occurance(ast_range(97, 97), some(1), none)
     ),
     (
       "a{,1}",
-      ast_occurance(ast_char(a), none, some(1))
+      ast_occurance(ast_range(97, 97), none, some(1))
     ),
     (
       "a{12,18}",
-      ast_occurance(ast_char(a), some(12), some(18))
+      ast_occurance(ast_range(97, 97), some(12), some(18))
+    ),
+    (
+      "[ab]",
+      ast_or(ast_range(97, 97), ast_range(98, 98))
+    ),
+    (
+      "[a-zA-Z0-9]",
+      ast_or(ast_or(ast_range(97, 122), ast_range(65, 90)), ast_range(48, 57))
+    ),
+    (
+      "\\d",
+      ast_range(48, 57)
+    ),
+    (
+      "[a-z\\d]",
+      ast_or(ast_range(97, 122), ast_range(48, 57))
     )
   ],
   forall(member((Correct_Input, Correct_Output), Correct_Strings),
     assertion(test_correct_string(Correct_Input, Correct_Output))
   ).
-
+/*
 test(incorrect_strings) :-
   Incorrect_Strings = [
     (
@@ -646,7 +667,5 @@ test(ast_to_string) :-
   forall(member((String, Correct_Dot_File), Dot_Files),
     assertion(test_dot_output(String, Correct_Dot_File))
   ).
-
-:- end_tests(regex_ast).
-
 */
+:- end_tests(regex_ast).
