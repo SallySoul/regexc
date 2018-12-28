@@ -236,6 +236,7 @@ gram_class_non_range_symbol(ast_error, Errors) -->
 gram_class_non_range_symbol(C, Errors) -->
   any_char(C, Pos),
   {
+    (C = ']' -> fail; true),
     control_symbols(Controls),
     member(C, Controls),
     Errors = [
@@ -247,6 +248,7 @@ gram_class_non_range_symbol(C, Errors) -->
 gram_class_non_range_symbol(ast_range(Code, Code), []) -->
   any_char(C, _),
   {
+    (C = ']' -> fail; true),
     char_code(C, Code)
   }.
 
@@ -267,6 +269,7 @@ gram_class_range_symbol('\\', Errors) -->
 gram_class_range_symbol(C, Errors) -->
   any_char(C, Pos),
   {
+    (C = ']' -> fail; true),
     control_symbols(Controls),
     member(C, Controls),
     Errors = [
@@ -278,6 +281,7 @@ gram_class_range_symbol(C, Errors) -->
 gram_class_range_symbol(Code, []) -->
   any_char(C, _),
   {
+  %    (C = ']' -> fail; true),
     char_code(C, Code)
   }.
 
@@ -288,20 +292,29 @@ gram_class_range_symbol(Code, []) -->
 % However special characters need to be escaped with a '\..'
 %
 
-gram_class_definition(ast_not(Ast), Errors) -->
-  [('[', _), ('^', _)],
-  gram_class_members(Ast, Errors),
-  [(']', _)].
-
 gram_class_definition(Ast, Errors) -->
-  [('[', _)],
-  gram_class_members(Ast, Errors),
-  [(']', _)].
+  [('[', Start_Pos)],
+  maybe_not_class_definition(Start_Pos, Ast, Errors).
 
-gram_class_definition(ast_error, Errors) -->
-  [('[', Pos), (']', _)],
+maybe_not_class_definition(Start_Pos, ast_not(Ast), Errors) -->
+  [('^', _)],
+  middle_of_class_definition(Start_Pos, Ast, Errors).
+
+maybe_not_class_definition(Start_Pos, Ast, Errors) -->
+  middle_of_class_definition(Start_Pos, Ast, Errors).
+
+middle_of_class_definition(Start_Pos, Ast, Errors) -->
+  gram_class_members(Start_Pos, Ast, Member_Errors),
+  end_of_class_definition(Start_Pos, End_Errors),
   {
-    Errors = [error("No members in class defintions", some(Pos))]
+    append(Member_Errors, End_Errors, Errors)
+  }.
+
+end_of_class_definition(_Start_Pos, []) --> [(']', _)].
+end_of_class_definition(Start_Pos, Errors) -->
+  [],
+  {
+    Errors = [some("No closing bracket for class defintions", some(Start_Pos))]
   }.
 
 %
@@ -355,10 +368,15 @@ maybe_class_members(First_Ast, First_Errors, Ast, Errors) -->
 
 maybe_class_members(Ast, Errors, Ast, Errors) --> [].
 
-gram_class_members(Ast, Errors) -->
+gram_class_members(_Start_Pos, Ast, Errors) -->
   gram_class_member(First_Ast, First_Errors),
   maybe_class_members(First_Ast, First_Errors, Ast, Errors).
 
+gram_class_members(Start_Pos, ast_error, Errors) -->
+  [],
+  {
+    Errors = [some("No members in class defintions", some(Start_Pos))]
+  }.
 
 gram_symbol(Ast, Errors) -->
   [('\\', _)],
