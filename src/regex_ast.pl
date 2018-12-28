@@ -403,7 +403,6 @@ gram_symbol(ast_error, Errors) -->
 %gram_single(Ast, Errors) --> gram_range_section(Ast, Errors).
 gram_single(Ast, Errors) --> gram_class_definition(Ast, Errors).
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
-gram_single(Ast, Errors) --> gram_symbol(Ast, Errors).
 gram_single(Ast_Node, Errors) --> [('(', _)], gram_expr(Ast_Node, Errors), [(')', _)].
 gram_single(Ast_Node, All_Errors) -->
   [('(', Pos)],
@@ -416,6 +415,7 @@ gram_single(ast_error, All_Errors) -->
   {
     All_Errors = [error("No closing parenthesis", some(Pos))]
   }.
+gram_single(Ast, Errors) --> gram_symbol(Ast, Errors).
 
 ast_to_dot(Ast, Stream) :-
   format(Stream, "digraph AST {~n", []),
@@ -588,7 +588,7 @@ test(correct_strings) :-
   forall(member((Correct_Input, Correct_Output), Correct_Strings),
     assertion(test_correct_string(Correct_Input, Correct_Output))
   ).
-/*
+
 test(incorrect_strings) :-
   Incorrect_Strings = [
     (
@@ -598,11 +598,12 @@ test(incorrect_strings) :-
     ),
     (
       "(a",
-      ast_char(a),
+      ast_range(97, 97),
       [error("No closing parenthesis", some(0))]
     ),
     (
       "a|",
+      ast_or(ast_range(97, 97), ast_error),
       [error("Unexpected OR operator", some(1))]
     )
   ],
@@ -632,7 +633,7 @@ test(combined_asts) :-
   forall(member((Asts, Correct_Ast), Combined_Asts),
     assertion(test_combined_ast(Asts, Correct_Ast))
   ).
-
+/*
 test_dot_output(String, Correct_Dot_File) :-
   string_ast(String, Ast, Errors),
   assertion(Errors = []),
