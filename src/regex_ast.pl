@@ -86,13 +86,8 @@ gram_occurance_fields(Min, Max, []) -->
   [(',', _)],
   maybe_integer(Max).
 
-gram_occurance_fields(Min, none, Errors) -->
-  maybe_integer(Min),
-  any_char(_, Pos),
-  {
-    Errors = [ error("Expected digit or ','", some(Pos))]
-  }.
-
+gram_occurance_fields(Reps, Reps, []) -->
+  maybe_integer(Reps).
 
 %
 % In order to parse occurances we need parse integers
