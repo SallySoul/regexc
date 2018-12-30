@@ -39,9 +39,14 @@ string_to_gram(String, Goal) :-
   util:enumeration(Chars, Enumerated_Chars),
   phrase(Goal, Enumerated_Chars).
 
-
+%
+% This is the top level predicate
+%
 gram_expr(Ast_Node, Errors) --> gram_or(Ast_Node, Errors).
 
+%
+% We can combine to expressions with logical OR
+%
 gram_or(Ast_Node, Errors) --> gram_concat(Ast_Node, Errors).
 gram_or(ast_or(Ast_Node1, Ast_Node2), All_Errors) -->
   gram_concat(Ast_Node1, Errors1),
@@ -53,6 +58,9 @@ gram_or(ast_or(Ast_Node1, ast_error), All_Errors) -->
   [('|', Pos)],
   { append(Errors, [error("Unexpected OR operator", some(Pos))], All_Errors)}.
 
+%
+% Two expressions can be concatenated together
+%
 gram_concat(Ast_Node, Errors) --> gram_occurance(Ast_Node, Errors).
 gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) -->
   gram_occurance(Ast_Node1, Errors1),
@@ -68,19 +76,41 @@ gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) -->
 % There is syntactic sugar for the common cases, like * -> {,},
 % However we also want to able to specify other ranges like {3,6}
 %
-gram_occurance(Ast_Node, Errors) --> gram_single(Ast_Node, Errors).
-gram_occurance(ast_occurance(Ast_Node, none, none), Errors) --> gram_single(Ast_Node, Errors), [('*', _)].
-gram_occurance(ast_occurance(Ast_Node, none, some(1)), Errors) --> gram_single(Ast_Node, Errors), [('?', _)].
-gram_occurance(ast_occurance(Ast_Node, some(1), none), Errors) --> gram_single(Ast_Node, Errors), [('+', _)].
-gram_occurance(ast_occurance(Ast_Node, Min, Max), Errors) -->
-  gram_single(Ast_Node, Node_Errors),
+gram_occurance(Final_Ast, Final_Errors) -->
+  gram_single(Start_Ast, Start_Errors),
+  gram_occurance_specifications(Start_Ast, Start_Errors, Final_Ast, Final_Errors).
+
+%
+% We may want nested occurance spcifications, ie. a{2}{,2}
+% This is where we parse the specifications
+%
+gram_occurance_specifications(Start_Ast, Start_Errors, Final_Ast, Final_Errors) -->
+  gram_occurance_specification(Start_Ast, Start_Errors, Next_Ast, Next_Errors),
+  gram_occurance_specifications(Next_Ast, Next_Errors, Final_Ast, Final_Errors).
+
+gram_occurance_specifications(Next_Ast, Next_Errors, Next_Ast, Next_Errors) --> [].
+
+%
+% occurance specifications have a few special cases, * + ?
+% They are otherwise specified with {Min,Max} or {Count} notation
+%
+gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, none, some(1)), Sub_Errors) -->
+  [('?', _)].
+gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, none, none), Sub_Errors) -->
+  [('*', _)].
+gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, some(1), none), Sub_Errors) -->
+  [('+', _)].
+gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, Min, Max), Final_Errors) -->
   [('{', _)],
   gram_occurance_fields(Min, Max, Field_Errors),
   [('}', _)],
   {
-    append(Node_Errors, Field_Errors, Errors)
+    append(Sub_Errors, Field_Errors, Final_Errors)
   }.
 
+%
+% The fields within brackets are parsed here
+%
 gram_occurance_fields(Min, Max, []) -->
   maybe_integer(Min),
   [(',', _)],
@@ -95,24 +125,29 @@ gram_occurance_fields(Reps, Reps, []) -->
 maybe_integer(some(I))--> integer(I).
 maybe_integer(none) --> [].
 
+%
+% greedily reads digits, then converts them in to an integer
+%
 integer(I) -->
   digit(D0),
   digits(D),
   { number_chars(I, [D0|D])}.
 
+%
+% Greedily read in a list of digits
+%
 digits([D|T]) -->
   digit(D), !,
   digits(T).
 digits([]) -->
   [].
 
+%
+% Accepts any digit char
+%
 digit(D) -->
   [(D, _)],
   { char_type(D, digit)}.
-
-
-
-
 
 % TODO: really? I think this can be better?
 any_char(C, Pos) -->
@@ -202,7 +237,7 @@ gram_operator_symbol(ast_range(Code, Code), []) -->
 %
 gram_special_symbol(Ast, Errors) -->
   [('\\', _)],
-  (gram_control_symbol(Ast, Errors) ; 
+  (gram_control_symbol(Ast, Errors) ;
    gram_operator_symbol(Ast, Errors) ;
    gram_matching_symbol(Ast, Errors)).
 
@@ -215,7 +250,7 @@ gram_special_symbol(ast_error, Errors) -->
 %
 % Inside class defintions, for non range specifiers
 % we only need to '\' escape special symbols and matching chars
-% Since non_range symbols are a super set of range symbols, we 
+% Since non_range symbols are a super set of range symbols, we
 % cut here if '\' is found
 %
 gram_class_non_range_symbol(Ast, Errors) -->
@@ -236,7 +271,7 @@ gram_class_non_range_symbol(C, Errors) -->
     member(C, Controls),
     Errors = [
       error(
-        "Control characters must be in class definitions escaped with a '\' in order to be matched against", 
+        "Control characters must be in class definitions escaped with a '\' in order to be matched against",
         some(Pos))]
   }.
 
@@ -269,7 +304,7 @@ gram_class_range_symbol(C, Errors) -->
     member(C, Controls),
     Errors = [
       error(
-      "Control characters must be escaped with a '\' when used to specify a range", 
+      "Control characters must be escaped with a '\' when used to specify a range",
         some(Pos))]
   }.
 
@@ -333,10 +368,10 @@ gram_class_member(ast_error, All_Errors) -->
   gram_class_range_symbol(_Min_Code, Errors),
   [('-', Pos)], !,
   {
-    append( 
-      Errors, 
+    append(
+      Errors,
       [error(
-        "Unexpected '-', should be followed by a symbol, or preceeded by a '\\'", 
+        "Unexpected '-', should be followed by a symbol, or preceeded by a '\\'",
         some(Pos))],
       All_Errors)
   }.
@@ -584,6 +619,14 @@ test(correct_strings) :-
     (
       "[a-z\\d]",
       ast_or(ast_range(97, 122), ast_range(48, 57))
+    ),
+    (
+      "a{2}{,2}",
+      ast_occurance(ast_occurance(ast_range(97, 97), some(2), some(2)), none, some(2))
+    ),
+    (
+      "[b]?+*",
+      ast_occurance(ast_occurance(ast_occurance(ast_range(98, 98), none, some(1)), some(1), none), none, none)
     )
   ],
   forall(member((Correct_Input, Correct_Output), Correct_Strings),
