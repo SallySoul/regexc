@@ -1,7 +1,7 @@
 digraph NFA {
 	0;
 	1;
-	0 -> 1 [label="a"];
+	0 -> 1 [label="range(97,97)"];
 	1 [shape=doublecircle];
 	0 [shape=box];
 }

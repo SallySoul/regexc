@@ -9,9 +9,9 @@ digraph NFA {
 	7;
 	8;
 	9;
-	1 -> 2 [label="a"];
-	4 -> 5 [label="b"];
-	6 -> 7 [label="c"];
+	1 -> 2 [label="range(97,97)"];
+	4 -> 5 [label="range(98,98)"];
+	6 -> 7 [label="range(99,99)"];
 	0 -> 1 [label="ε"];
 	0 -> 3 [label="ε"];
 	2 -> 9 [label="ε"];
