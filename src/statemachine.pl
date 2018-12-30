@@ -79,7 +79,7 @@ ast_nfa(Root_Node, NFA) :-
 % state(N) -- X --> state(N+1)
 %
 ast_nfa_r(
-  ast_char(X),
+  ast_range(Min, Max),
   Partial_NFA,
   (Start_State, Final_State),
   (Final_State, Used_Until_State)
@@ -88,8 +88,9 @@ ast_nfa_r(
 
   Used_Until_State is Final_State + 1,
 
+  Transition_Input = range(Min, Max),
   add_nb_set(Final_State, NFA_States),
-  add_nb_set((Start_State, X, Final_State), NFA_Transitions ).
+  add_nb_set((Start_State, Transition_Input, Final_State), NFA_Transitions ).
 
 %
 % ast_char(X)
@@ -105,8 +106,9 @@ ast_nfa_r(
 
   Used_Until_State is Final_State + 1,
 
+  Transition_Input = wildcard,
   add_nb_set(Final_State, NFA_States),
-  add_nb_set((Start_State, *, Final_State), NFA_Transitions ).
+  add_nb_set((Start_State, Transition_Input, Final_State), NFA_Transitions ).
 
 %
 % ast_occurance(Ast_Node, none, none)
