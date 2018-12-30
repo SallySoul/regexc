@@ -150,55 +150,37 @@ test_parse_regex_strings(Strings, Correct_Output, Correct_Ast, Correct_Error_Fla
   assertion(Ast = Correct_Ast),
   assertion(Error_Flag = Correct_Error_Flag),
   assertion(Output = Correct_Output).
-/*
+
 test(parser_regex_strings) :-
+
   Inputs = [
     (
       ["a"],
       "",
-      ast_char(a),
+      ast_range(97, 97),
       false
     ),
     (
       ["a", "b"],
       "",
-      ast_or(ast_char(a), ast_char(b)),
+      ast_or(ast_range(97, 97), ast_range(98, 98)),
       false
     ),
     (
       ["(a", "b"],
       "ERROR: No closing parenthesis at 0\n(a\n^\n",
-      ast_char(b),
+      ast_range(98, 98),
       true
     ),
     (
       ["a|b", "c?"],
       "",
-      ast_or(ast_or(ast_char(a), ast_char(b)), ast_occurance(ast_char(c), none, some(1))),
+      ast_or(ast_or(ast_range(97, 97), ast_range(98, 98)), ast_occurance(ast_range(99, 99), none, some(1))),
       false
-    ),
-    (
-      ["t"],
-      "ERROR: Could not parse string at 0\nt\n^\nERROR: No strings were parsed successfully\n",
-      Unknown,
-      true
-    ),
-    (
-      ["t", "a"],
-      "ERROR: Could not parse string at 0\nt\n^\n",
-      ast_char(a),
-      true
-    ),
-    (
-      [],
-      "ERROR: No strings were parsed successfully\n",
-      Unknown,
-      true
     )
-
   ],
   forall(member((Strings, Output, Ast, Error_Flag), Inputs),
     test_parse_regex_strings(Strings, Output, Ast, Error_Flag)
   ).
-*/
+
 :- end_tests(regex_parsing).
