@@ -5,7 +5,7 @@
 %
 % This descripes the CLI specification for optparse
 %
-re2b_spec(App_Spec) :-
+regexc_spec(App_Spec) :-
   App_Spec = [
     [
       opt(regex), type(atom), meta('REGEX'),
@@ -36,7 +36,7 @@ re2b_spec(App_Spec) :-
 %
 % These are the options we want to use for optparse
 %
-re2b_parse_options(Parse_Options) :-
+regexc_parse_options(Parse_Options) :-
   Parse_Options = [
     duplicated_flags(keepall)
   ].
@@ -47,11 +47,11 @@ re2b_parse_options(Parse_Options) :-
 show_help_if_needed(Opts, App_Spec) :-
   member(help(true), Opts), !,
   opt_help(App_Spec, Help_Message),
-  writeln("re2b"),
+  writeln("regexc"),
   writeln("\nSUMMARY:"),
   writeln("Compile regular expressions into binary executables"),
   writeln("\nUSAGE:"),
-  writeln("\tre2b [-r <regex> | -i <path] OPTIONS"),
+  writeln("\tregexc [-r <regex> | -i <path] OPTIONS"),
   writeln("\nFLAGS:"),
   write(user_output, Help_Message),
   halt(1).
@@ -90,8 +90,8 @@ process_regexes(Opts, Regex_Strings, Remaining_Opts) :-
 % TODO: I'm being inconsistant between Args and Options
 %
 parse_args(Args, Processed_Opts) :-
-  re2b_spec(App_Spec),
-  re2b_parse_options(Parse_Options),
+  regexc_spec(App_Spec),
+  regexc_parse_options(Parse_Options),
   opt_parse(App_Spec, Args, Opts, _, Parse_Options),
   show_help_if_needed(Opts, App_Spec),
 

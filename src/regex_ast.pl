@@ -93,6 +93,7 @@ gram_occurance_specifications(Next_Ast, Next_Errors, Next_Ast, Next_Errors) --> 
 %
 % occurance specifications have a few special cases, * + ?
 % They are otherwise specified with {Min,Max} or {Count} notation
+% TODO, we could clean this up a bit
 %
 gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, none, some(1)), Sub_Errors) -->
   [('?', _)].
@@ -115,6 +116,8 @@ gram_occurance_fields(Min, Max, []) -->
   maybe_integer(Min),
   [(',', _)],
   maybe_integer(Max).
+
+% TODO: Add Error for a{2-3}
 
 gram_occurance_fields(Reps, Reps, []) -->
   maybe_integer(Reps).

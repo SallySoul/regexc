@@ -1,11 +1,11 @@
-TEMPDIRS = build build/distributable
+TEMPDIRS = build build/
 
-MacOS_Distributeable_Path="build/distributable/re2b"
+Distributeable_Path="build/regexc"
 
-all: .dirFile $(MacOS_Distributeable_Path)
+all: .dirFile $(Distributeable_Path)
 
-$(MacOS_Distributeable_Path):
-	swipl -o $(MacOS_Distributeable_Path) -c src/interface.pl --stand_alone=true
+$(Distributeable_Path):
+	swipl -o $(Distributeable_Path) -c src/interface.pl --stand_alone=true
 
 .dirFile:
 	for dir in $(TEMPDIRS); do \

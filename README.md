@@ -8,13 +8,45 @@ regexc is a regular expression compiler. It takes a regular expression as input 
 that matches that regular expression, as output.
 
 My goal for this project was to explore using prolog in a practical setting. That means understanding
-things like developer workflow, project layout, and argument parsing. Although the use of the this 
+things like developer workflow, project layout, and argument parsing. Although the use of the this
 project is a bit contrived, I hope that it can serve as an accessable example of for what the source
 of a practical prolog application might look like.
 
+## How To Build
+
+You will need to install [SWI Prolog](http://www.swi-prolog.org). I recomend using your package
+manager of choice. I'm on macOS so I used [brew](https://brew.sh).
+
+```
+brew install swi-prolog
+```
+
+From there just run `make`. This will create a distributable in `build`.
+
+```
+$ make
+
+$ file build/regexc
+```
+
+## How To Use Regexc
+
+This project is still under development, and at this stage, the compiler pipeline is not complete.
+At the moment regexc can parse regular expressions, and covert the abstract syntax tree into a
+Non-Deterministic Automata. Regexc can dump its intermediate representations as dot files. To use dot
+files I would recomend installing (graphviz[http://graphviz.org]. Here is a demonstration of how to use
+regexc in its current form.
+
+```
+regexc -r "\d{2,3}-\d{4,7}-[a-zA-Z_]+" --ast-dot /tmp/ast.dot --nfa-dot /tmp/nfa.dot &&
+dot -Tsvg -o /tmp/ast.svg ast.dot &&
+dot -Tsvg -o /tmp/nfa.svg nfa.dot &&
+open /tmp/ast.svg /tmp/nfa.svg
+```
+
 ## For Developers
 
-You will need to install [SWI Prolog](http://www.swi-prolog.org). I recomend using your package 
+You will need to install [SWI Prolog](http://www.swi-prolog.org). I recomend using your package
 manager of choice. I'm on macOS so I used [brew](https://brew.sh).
 
 ```
@@ -44,20 +76,39 @@ $ swipl -f src/load.pl
 true.
 ```
 
+The Makefile has a `test` target, but that includes coverage as well. You can use
+the `run_tests/0` goal to run the tests without the extra machinery to find coverage.
+
+```
+# Run Tests with the Makefile
+$ make test
+
+# Run Coverage tests without coverage results
+$ swipl -f src/load.pl -g run_tests
+```
+
+To run the main interface without packaging it you can simple load `src/interface.pl`. For example:
+
+```
+swipl -f src/interface.pl -- -r "\d{2,3}"
+```
+
 If you are adding a new module, please add it to `src/load.pl`.
 
 ## Design Decisions
 
 ### SWI Prolog Only
 
-I am not concerned with compatability for other prolog distrubtions.
+I am not concerned with compatability for other prolog distributions. While I am always
+willing to hear other opinions, for now it seems to me that SWI-Prolog is the only prolog distribtion
+with a solid and public ecosystem.
 
 ### Argument Parsing
 	
 SWI Prolog provides an [optparse](http://www.swi-prolog.org/pldoc/man?section=optparse) module that is
-modeled after python's own optparse. This module provides the minimum of what I would expect from 
-an argument parsing library in any language: one specification can be used to generate both a help 
-message and parse the arguments. 
+modeled after python's own optparse. This module provides the minimum of what I would expect from
+an argument parsing library in any language: one specification can be used to generate both a help
+message and parse the arguments.
 
 ### Testing
 
@@ -82,8 +133,13 @@ lines for example). However I was likely holding it wrong, did not have well mad
 other things, prolog source formatting. It is much newer than package-indent, and was also a supervised
 by Jan Wielmaker.
 
+  That being said, I have started to investigate what it would take to create a formatting tool.
+Prolog has several use facilities for parsing and serializing code. However these utilities
+quickly drop comments, which means that a formatter that takes uncommented predicates is
+relativley simple.
+
 * I had trouble with the optparse module. The trouble was not unique to that module, however. The
-issue I faced was the the specification is a very specific kind of structure. Any goals that 
+issue I faced was the the app specification is a very specific kind of structure. Any goals that
 expected that structure would simply fail if it did not meet match the expectations. In this case
 I think it would be wise to have some goal that can type-check or parse the application structure
 and give detailed feedback on why it does not meet expections. Adding such a goal to SWI Prolog might
