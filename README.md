@@ -19,7 +19,7 @@ that matches that regular expression, as output.
 
 My goal for this project was to explore using prolog in a practical setting. That means understanding
 things like developer workflow, project layout, and argument parsing. Although the use of the this
-project is a bit contrived, I hope that it can serve as an accessable example for a practical prolog
+project is a bit contrived, I hope that it can serve as an accessable example for what a practical prolog
 application might look like.
 
 ## How To Build

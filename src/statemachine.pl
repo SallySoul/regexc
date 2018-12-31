@@ -42,7 +42,7 @@ initialize_partial_nfa(Partial_NFA) :-
 % This converts an AST into an NFA.
 % Note that we use non-backtracking sets, so this is not bi-directional.
 %
-% @arg AST The Ast the convert
+% @arg AST The AST the convert
 % @arg NFA the resulting NFA
 ast_nfa(AST, NFA) :-
   % We use non-backtracking sets to construct the NFA
@@ -119,22 +119,22 @@ ast_nfa_r(
 % ast_concat(Left, Right)
 %
 ast_nfa_r(
-  ast_concat(Sub_Ast_L, Sub_Ast_R),
+  ast_concat(Sub_AST_L, Sub_AST_R),
   Partial_NFA,
   (Start_State, Final_State),
   (Next_Available_State, Used_Until_State)
 ) :-
   ast_nfa_r(
-    Sub_Ast_L,
+    Sub_AST_L,
     Partial_NFA,
-    (Start_State, Sub_Ast_R_Start),
+    (Start_State, Sub_AST_R_Start),
     (Next_Available_State, L_Used_Until_State)
   ),
 
   ast_nfa_r(
-    Sub_Ast_R,
+    Sub_AST_R,
     Partial_NFA,
-    (Sub_Ast_R_Start, Final_State),
+    (Sub_AST_R_Start, Final_State),
     (L_Used_Until_State, Used_Until_State)
   ).
 
@@ -147,32 +147,32 @@ ast_nfa_r(
 % to the new start state
 % and from their final states to the new final state
 ast_nfa_r(
-  ast_or(Sub_Ast_L, Sub_Ast_R),
+  ast_or(Sub_AST_L, Sub_AST_R),
   Partial_NFA,
   (Start_State, Final_State),
-  (Sub_Ast_L_Start, Used_Until_State)
+  (Sub_AST_L_Start, Used_Until_State)
 ) :-
   (NFA_States, _, NFA_Empty_Transitions) = Partial_NFA,
 
-  add_nb_set(Sub_Ast_L_Start, NFA_States),
-  Next_For_L is Sub_Ast_L_Start + 1,
+  add_nb_set(Sub_AST_L_Start, NFA_States),
+  Next_For_L is Sub_AST_L_Start + 1,
 
   ast_nfa_r(
-    Sub_Ast_L,
+    Sub_AST_L,
     Partial_NFA,
-    (Sub_Ast_L_Start, Sub_Ast_L_Final),
+    (Sub_AST_L_Start, Sub_AST_L_Final),
     (Next_For_L, L_Used_Until_State)
   ),
 
-  Sub_Ast_R_Start = L_Used_Until_State,
-  add_nb_set(Sub_Ast_R_Start, NFA_States),
+  Sub_AST_R_Start = L_Used_Until_State,
+  add_nb_set(Sub_AST_R_Start, NFA_States),
 
   Next_For_R is L_Used_Until_State + 1,
 
   ast_nfa_r(
-    Sub_Ast_R,
+    Sub_AST_R,
     Partial_NFA,
-    (Sub_Ast_R_Start, Sub_Ast_R_Final),
+    (Sub_AST_R_Start, Sub_AST_R_Final),
     (Next_For_R, R_Used_Until_State)
   ),
 
@@ -180,21 +180,21 @@ ast_nfa_r(
   Used_Until_State is Final_State + 1,
   add_nb_set(Final_State, NFA_States),
 
-  add_nb_set((Start_State, Sub_Ast_L_Start), NFA_Empty_Transitions),
-  add_nb_set((Start_State, Sub_Ast_R_Start), NFA_Empty_Transitions),
-  add_nb_set((Sub_Ast_L_Final, Final_State), NFA_Empty_Transitions),
-  add_nb_set((Sub_Ast_R_Final, Final_State), NFA_Empty_Transitions).
+  add_nb_set((Start_State, Sub_AST_L_Start), NFA_Empty_Transitions),
+  add_nb_set((Start_State, Sub_AST_R_Start), NFA_Empty_Transitions),
+  add_nb_set((Sub_AST_L_Final, Final_State), NFA_Empty_Transitions),
+  add_nb_set((Sub_AST_R_Final, Final_State), NFA_Empty_Transitions).
 
 
 %
-% ast_occurance(Ast, Min, Max)
+% ast_occurance(AST, Min, Max)
 %
 % We use two helper functions. First we
 % make a machine for the Min occurances.
 %
 % Then we make a machine for (Max - Min) difference
 ast_nfa_r(
-  ast_occurance(Sub_Ast, Min, Max),
+  ast_occurance(Sub_AST, Min, Max),
   Partial_NFA,
   (Start_State, Final_State),
   (Next_Index, Used_Until_State)
@@ -202,7 +202,7 @@ ast_nfa_r(
 
   % Calculate the Min machine
   ast_nfa_min_r(
-    (Sub_Ast, Min),
+    (Sub_AST, Min),
     Partial_NFA,
     (Start_State, Min_Final),
     (Next_Index, Min_Used_Until)
@@ -211,7 +211,7 @@ ast_nfa_r(
   max_diff(Min, Max, Diff),
 
   ast_nfa_max(
-    (Sub_Ast, Diff),
+    (Sub_AST, Diff),
     Partial_NFA,
     (Min_Final, Final_State),
     (Min_Used_Until, Used_Until_State)
@@ -233,7 +233,7 @@ ast_nfa_min_r(
 % chain together the AST's machine
 %
 ast_nfa_min_r(
-  (Sub_Ast, some(N)),
+  (Sub_AST, some(N)),
   (Partial_NFA),
   (Start_State, Final_State),
   (Next_State, Used_Until_State)
@@ -241,14 +241,14 @@ ast_nfa_min_r(
   M is N - 1,
 
   ast_nfa_r(
-    Sub_Ast,
+    Sub_AST,
     Partial_NFA,
     (Start_State, Middle_State),
     (Next_State, Middle_Used_Until_State)
   ),
 
   ast_nfa_min_r(
-    (Sub_Ast, some(M)),
+    (Sub_AST, some(M)),
     Partial_NFA,
     (Middle_State, Final_State),
     (Middle_Used_Until_State, Used_Until_State)
@@ -269,7 +269,7 @@ max_diff(some(Min), some(Max), some(Diff)) :- Diff is Max - Min.
 % and vice-versa, so that it can be skipped or looped infinitley
 %
 ast_nfa_max(
-  (Sub_Ast, none),
+  (Sub_AST, none),
   Partial_NFA,
   (Start_State, Final_State),
   (Next_State, Used_Until_State)
@@ -278,7 +278,7 @@ ast_nfa_max(
   (_, _, NFA_Empty_Transitions) = Partial_NFA,
 
   ast_nfa_r(
-    Sub_Ast,
+    Sub_AST,
     Partial_NFA,
     (Start_State, Final_State),
     (Next_State, Used_Until_State)
@@ -293,7 +293,7 @@ ast_nfa_max(
 % to the real final state, so that the rest of the chain can be skipped
 %
 ast_nfa_max(
-  (Sub_Ast, some(N)),
+  (Sub_AST, some(N)),
   Partial_NFA,
   (Start_State, Final_State),
   (Next_State, Used_Until_State)
@@ -306,7 +306,7 @@ ast_nfa_max(
   First_A_State is Final_State + 1,
 
   ast_nfa_max_r(
-    (Sub_Ast, N, Final_State),
+    (Sub_AST, N, Final_State),
     Partial_NFA,
     Start_State,
     (First_A_State, Used_Until_State)
@@ -324,7 +324,7 @@ ast_nfa_max_r(
 ).
 
 ast_nfa_max_r(
-  (Sub_Ast, N, Final_State),
+  (Sub_AST, N, Final_State),
   Partial_NFA,
   Start_State,
   (Next_State, Used_Until_State)
@@ -333,7 +333,7 @@ ast_nfa_max_r(
   (_, _, NFA_Empty_Transitions) = Partial_NFA,
 
   ast_nfa_r(
-    Sub_Ast,
+    Sub_AST,
     Partial_NFA,
     (Start_State, Middle_State),
     (Next_State, Middle_Used_Until)
@@ -344,7 +344,7 @@ ast_nfa_max_r(
   % Call recurrence with bound decreased by one
   M is N - 1,
   ast_nfa_max_r(
-    (Sub_Ast, M, Final_State),
+    (Sub_AST, M, Final_State),
     Partial_NFA,
     Middle_State,
     (Middle_Used_Until, Used_Until_State)
@@ -395,20 +395,20 @@ start_state_to_dot(Stream, N) :-
 % @arg Output_Stream The stream to write the dot representation to
 nfa_to_dot(NFA, Output_Stream) :-
   NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States),
-  writeln(Stream, "digraph NFA {"),
-  states_to_dot(Stream, NFA_States),
-  transitions_to_dot(Stream, NFA_Transitions),
-  empty_transitions_to_dot(Stream, NFA_Empty_Transitions),
-  final_states_to_dot(Stream, NFA_Final_States),
-  start_state_to_dot(Stream, Start_State),
-  writeln(Stream, "}").
+  writeln(Output_Stream, "digraph NFA {"),
+  states_to_dot(Output_Stream, NFA_States),
+  transitions_to_dot(Output_Stream, NFA_Transitions),
+  empty_transitions_to_dot(Output_Stream, NFA_Empty_Transitions),
+  final_states_to_dot(Output_Stream, NFA_Final_States),
+  start_state_to_dot(Output_Stream, Start_State),
+  writeln(Output_Stream, "}").
 
 :- begin_tests(statemachine).
 
 test_dot_output(String, Correct_Dot_File) :-
-  regex_ast:string_ast(String, Ast, Errors),
+  regex_ast:string_ast(String, AST, Errors),
   assertion(Errors = []),
-	ast_nfa(Ast, Nfa),
+	ast_nfa(AST, Nfa),
 
   tmp_file_stream(text, Test_File, TO), close(TO),
   util:write_to_file(nfa_to_dot(Nfa), Test_File),

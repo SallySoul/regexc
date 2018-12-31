@@ -17,13 +17,13 @@ Its role is to relate strings to (abstract syntax trees, error list) tuples.
 @license MIT
 */
 
-%! string_ast(+Regex:string, -Root_Ast_Node, -Errors:list) is semidet.
-%! string_ast(-Regex:string, +Root_Ast_Node, -Errors:list) is semidet.
+%! string_ast(+Regex:string, -AST, -Errors:list) is semidet.
+%! string_ast(-Regex:string, +AST, -Errors:list) is semidet.
 %
 %   Relates a strint to root abstract syntax tree term and a list of errors.A
 %
 %   @arg Regex This is is the string representation of the regular expression
-%   @arg Root_Ast_Node This is the ast_* node representation of the regular expression, modulo errors
+%   @arg AST This is the ast_* node representation of the regular expression, modulo errors
 %   @arg Errors List of errors (reasons) why string, root are not the same.
 string_ast(String, Ast, Errors) :-
   % We /* use  */the atom-as-char, let swipl deal with specifics
@@ -33,11 +33,6 @@ string_ast(String, Ast, Errors) :-
 
   % Here we relate the list of chars to the grammer
   phrase(gram_expr(Ast, Errors), Enumerated_Chars), !.
-
-string_to_gram(String, Goal) :-
-  string_chars(String, Chars),
-  util:enumeration(Chars, Enumerated_Chars),
-  phrase(Goal, Enumerated_Chars).
 
 %
 % This is the top level predicate
