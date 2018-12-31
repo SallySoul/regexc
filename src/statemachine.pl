@@ -17,11 +17,10 @@ I: An initial state
 F: A set of accepting states
 
 We assume that all finite Automotan here share the same set in input symbols, bytes.
-For the purposes of specifying input in transitions we have three options.
+For the purposes of specifying input in transitions we have two options.
 
-byte(Byte),
 range(Min, Max),
-any.
+wildcard.
 
 Also note that a finite automaton is non-determinisitic unless E = [].
 

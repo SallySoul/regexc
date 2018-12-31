@@ -9,6 +9,7 @@ that matches that regular expression, as output.
 
 *  [Introduction](#Introduction)
 *  [How To Build](#How-To-Build)
+*  [How To Use Regexc](#How-To-Use-Regexc)
 *  [Regular Expression Syntax](#Regular-Expression-Syntax)
 *  [For Developers](#For-Developers)
 *  [Future Work](#Future-Work)
@@ -55,19 +56,20 @@ dot -Tsvg -o /tmp/nfa.svg nfa.dot &&
 open /tmp/ast.svg /tmp/nfa.svg
 ```
 
-Regexc should provide a useful error message if it fails to parse a regular expression. A generic
-error is provided, but I am working towards eliminating the case where it is seen.
+Regexc should provide a useful error message if it fails to parse a regular expression.
 
 ```
-# An example of a useful error
 $ regexc -r "what is (this|that"
 ERROR: No closing parenthesis at 8
 what is (this|that
         ^
 ERROR: No strings were parsed successfully
 Exiting due to above Errors...
+```
 
-# The generic (bad) error
+A generic error is provided, but I am working towards eliminating the case where it is seen.
+
+```
 $ regexc -r "\d{2-3}"
 ERROR: Could not parse string at 0
 \d{2-3}
@@ -111,7 +113,7 @@ Operator characters must be backslash escaped to be taken literally.
 Control Symbols   = ['\\', '(', ')', '[', ']', '-']
 Operator Symbols  = ['+', '*', '?', '{', '}', '|', '.']
 ```
-"\(" Would then match the '(' instead of being interpreted as starting a group.
+For example, "\\\(" Would then match the '(' instead of being interpreted as starting a group.
 
 There are also classes that can match one of a set of characters. These are specified with `[ Members ]`
 notations.
@@ -126,7 +128,7 @@ Member -> Single_Char                     # A single char to include in the clas
        -> Single_Char - Single_Char       # A range of characters to include in the class
 ```
 
-"[a-z\_]" would match any lowercase letter or '\_'.
+For example, "[a-z\_]" would match any lowercase letter or '\_'.
 
 We also provide some shortcuts to commonly used classes. These class shortcuts can be used freely outside
 of class defintions, but can only be used in place of a range when in a class defintions. That is, one

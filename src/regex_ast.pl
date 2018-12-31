@@ -503,6 +503,12 @@ gram_single(ast_error, All_Errors) -->
   }.
 gram_single(Ast, Errors) --> gram_symbol(Ast, Errors).
 
+%! ast_to_dot(+Ast, +Stream) is det.
+%
+%   Write the dot representation of the Ast to the specified stream.
+%
+%   @arg Ast The Ast to write out
+%   @arg Stream The stream to write the dot represenation too
 ast_to_dot(Ast, Stream) :-
   format(Stream, "digraph AST {~n", []),
   ast_to_dot_r(Stream, Ast, 0, _),
@@ -559,9 +565,14 @@ ast_to_dot_r(Stream, ast_or(Sub_Ast_L, Sub_Ast_R), Current_Index, Next_Index) :-
   format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_L_Index]),
   format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_R_Index]).
 
+
+%! combined_asts(+Asts, -Combined_Ast) is det.
+%! combined_asts(-Asts, +Combined_Ast) is det.
 %
-% Takes a list of Asts, and combines them with the or operator
+%   Combined_Ast is Asts combined with logical OR.
 %
+%   @arg Asts The list of Asts to combine with logical OR
+%   @arg Combined_Ast The result of combining Asts with logical OR
 combined_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
   foldl(combined_asts_fold, Rest_Of_Asts, First_Ast, Combined_Ast).
 
