@@ -165,14 +165,6 @@ any_char(C, Pos) -->
 % TODO, dunno if I like those leter ranges, seems wrong
 %
 gram_matching_symbol(Ast, []) -->
-  [('D', _)],
-  {
-    char_code('0', Min_Code),
-    char_code('9', Max_Code),
-    Ast = ast_not(ast_range(Min_Code, Max_Code))
-  }.
-
-gram_matching_symbol(Ast, []) -->
   [('d', _)],
   {
     char_code('0', Min_Code),
@@ -181,21 +173,82 @@ gram_matching_symbol(Ast, []) -->
   }.
 
 gram_matching_symbol(Ast, []) -->
-  [('a', _)],
+  [('D', _)],
   {
-    char_code('a', Min_Code),
-    char_code('z', Max_Code),
-    Ast = ast_range(Min_Code, Max_Code)
+    char_code('0', Min_Code),
+    char_code('9', Max_Code),
+    Ast = ast_not(ast_range(Min_Code, Max_Code))
   }.
 
 gram_matching_symbol(Ast, []) -->
-  [('A', _)],
+  [('w', _)],
   {
-    char_code('A', Min_Code),
-    char_code('Z', Max_Code),
-    Ast = ast_range(Min_Code, Max_Code)
+    char_code('a', Lowercase_Min),
+    char_code('z', Lowercase_Max),
+    char_code('A', Uppercase_Min),
+    char_code('Z', Uppercase_Max),
+    char_code('0', Digit_Min),
+    char_code('9', Digit_Max),
+    char_code('_', Underscore_Code),
+    char_code('-', Dash_Code),
+    Ast = ast_or(
+      ast_range(Lowercase_Min, Lowercase_Max),
+      ast_or(
+      ast_range(Uppercase_Min, Uppercase_Max),
+      ast_or(
+      ast_range(Digit_Min, Digit_Max),
+      ast_or(
+      ast_range(Underscore_Code, Underscore_Code),
+      ast_range(Dash_Code, Dash_Code)
+    ))))
   }.
 
+gram_matching_symbol(Ast, []) -->
+  [('W', _)],
+  {
+    char_code('a', Lowercase_Min),
+    char_code('z', Lowercase_Max),
+    char_code('A', Uppercase_Min),
+    char_code('Z', Uppercase_Max),
+    char_code('0', Digit_Min),
+    char_code('9', Digit_Max),
+    char_code('_', Underscore_Code),
+    char_code('-', Dash_Code),
+    Ast = ast_not(
+      ast_or(
+      ast_range(Lowercase_Min, Lowercase_Max),
+      ast_or(
+      ast_range(Uppercase_Min, Uppercase_Max),
+      ast_or(
+      ast_range(Digit_Min, Digit_Max),
+      ast_or(
+      ast_range(Underscore_Code, Underscore_Code),
+      ast_range(Dash_Code, Dash_Code)
+    )))))
+}.
+
+gram_matching_symbol(Ast, []) -->
+  [('s', _)],
+  {
+    char_code(' ', Space_Code),
+    char_code('\t', Tab_Code),
+    Ast = ast_or(
+      ast_range(Space_Code, Space_Code),
+      ast_range(Tab_Code, Tab_Code)
+    )
+  }.
+
+gram_matching_symbol(Ast, []) -->
+  [('s', _)],
+  {
+    char_code(' ', Space_Code),
+    char_code('\t', Tab_Code),
+    Ast = ast_not(
+      ast_or(
+      ast_range(Space_Code, Space_Code),
+      ast_range(Tab_Code, Tab_Code)
+    ))
+  }.
 %
 % Control symbols are chacters that
 % foundational to the syntax of the regexes.
@@ -630,6 +683,14 @@ test(correct_strings) :-
     (
       "[b]?+*",
       ast_occurance(ast_occurance(ast_occurance(ast_range(98, 98), none, some(1)), some(1), none), none, none)
+    ),
+    (
+      "(s\\ds)?",
+      ast_occurance(ast_concat(ast_range(115, 115), ast_concat(ast_range(48, 57), ast_range(115, 115))), none, some(1))
+    ),
+    (
+      "\\W",
+      ast_not(ast_or(ast_range(97, 122), ast_or(ast_range(65, 90), ast_or(ast_range(48, 57), ast_or(ast_range(95, 95), ast_range(45, 45))))))
     )
   ],
   forall(member((Correct_Input, Correct_Output), Correct_Strings),

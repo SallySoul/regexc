@@ -66,6 +66,7 @@ ast_nfa(Root_Node, NFA) :-
 
   NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States).
 
+% TODO: We do not support ast_not in the nfa process
 
 %
 % The following are ast_char_r definitions for each ast node type
