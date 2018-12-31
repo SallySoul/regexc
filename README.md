@@ -305,3 +305,6 @@ with ripgrep.
 The author of ripgrep wrote a blog post about text search that is a must-read if you are interested in
 that problem space.
 [ripgrep is faster than {grep, ag, git grep, ucg, pt, sift}](https://blog.burntsushi.net/ripgrep/)
+
+This stackoverflow question got me on the right track for handling character ranges.
+[How to implement regular expression NFA with character ranges?](https://stackoverflow.com/questions/20767047/how-to-implement-regular-expression-nfa-with-character-ranges)

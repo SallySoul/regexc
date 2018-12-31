@@ -10,17 +10,17 @@
 
 For the purposes of this module, a finite automaton is (Q, T, I, F) where:
 
-Q: A finite set of states, {s_i}
-T: A finite set of input transitions, {s_i X i -> s_j}
-E: A finite set of epislon transitions, {s_i -> s_j}
-I: An initial state
-F: A set of accepting states
+  * Q: A finite set of states, {s_i}
+  * T: A finite set of input transitions, {s_i X i -> s_j}
+  * E: A finite set of epislon transitions, {s_i -> s_j}
+  * I: An initial state
+  * F: A set of accepting states
 
 We assume that all finite Automotan here share the same set in input symbols, bytes.
 For the purposes of specifying input in transitions we have two options.
 
-range(Min, Max),
-wildcard.
+  * range(Min, Max)
+  * wildcard
 
 Also note that a finite automaton is non-determinisitic unless E = [].
 
@@ -28,13 +28,23 @@ Also note that a finite automaton is non-determinisitic unless E = [].
 @license MIT
 */
 
+%
+% This is a helper function for the top-level
+%
 initialize_partial_nfa(Partial_NFA) :-
   empty_nb_set(NFA_States),
   empty_nb_set(NFA_Transitions),
   empty_nb_set(NFA_Empty_Transitions),
   Partial_NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions).
 
-ast_nfa(Root_Node, NFA) :-
+%! ast_nfa(+AST, -NFA) is det.
+%
+% This converts an AST into an NFA.
+% Note that we use non-backtracking sets, so this is not bi-directional.
+%
+% @arg AST The Ast the convert
+% @arg NFA the resulting NFA
+ast_nfa(AST, NFA) :-
   % We use non-backtracking sets to construct the NFA
   empty_nb_set(NFA_States),
   empty_nb_set(NFA_Transitions),
@@ -55,7 +65,7 @@ ast_nfa(Root_Node, NFA) :-
 
   % Start our recursive construction
   ast_nfa_r(
-    Root_Node,
+    AST,
     Partial_NFA,
     (Start_State, Final_State),
     (Next_Available_State, _)
@@ -66,17 +76,13 @@ ast_nfa(Root_Node, NFA) :-
   NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States).
 
 % TODO: We do not support ast_not in the nfa process
+% I Think we may need to seperate ast_not from range specific operations
 
 %
 % The following are ast_char_r definitions for each ast node type
-% I attempt to document the goal including a ASCII diagram of the
-% resulting state machine. For example:
-% A -- x --> B
-% This reads, from state A, transition to State B on input x
 
 %
-% ast_char(X)
-% state(N) -- X --> state(N+1)
+% ast_range(Min, Max)
 %
 ast_nfa_r(
   ast_range(Min, Max),
@@ -93,8 +99,7 @@ ast_nfa_r(
   add_nb_set((Start_State, Transition_Input, Final_State), NFA_Transitions ).
 
 %
-% ast_char(X)
-% state(N) -- X --> state(N+1)
+% ast_wildcard
 %
 ast_nfa_r(
   ast_wildcard,
@@ -111,8 +116,7 @@ ast_nfa_r(
   add_nb_set((Start_State, Transition_Input, Final_State), NFA_Transitions ).
 
 %
-% ast_occurance(Ast_Node, none, none)
-% state
+% ast_concat(Left, Right)
 %
 ast_nfa_r(
   ast_concat(Sub_Ast_L, Sub_Ast_R),
@@ -135,9 +139,13 @@ ast_nfa_r(
   ).
 
 %
-% ast_occurance(Ast_Node, none, none)
-% state
+% ast_or(Left, Right)
 %
+% We add a start state and a final state
+% The left and right ASTS get convereted
+% Then epsilon transitions are added from their starts
+% to the new start state
+% and from their final states to the new final state
 ast_nfa_r(
   ast_or(Sub_Ast_L, Sub_Ast_R),
   Partial_NFA,
@@ -178,7 +186,13 @@ ast_nfa_r(
   add_nb_set((Sub_Ast_R_Final, Final_State), NFA_Empty_Transitions).
 
 
-
+%
+% ast_occurance(Ast, Min, Max)
+%
+% We use two helper functions. First we
+% make a machine for the Min occurances.
+%
+% Then we make a machine for (Max - Min) difference
 ast_nfa_r(
   ast_occurance(Sub_Ast, Min, Max),
   Partial_NFA,
@@ -203,6 +217,9 @@ ast_nfa_r(
     (Min_Used_Until, Used_Until_State)
   ).
 
+%
+% For a min bound of none or some(0), the machine is a no-op
+%
 ast_nfa_min_r(
   (_, Min),
   _,
@@ -211,6 +228,10 @@ ast_nfa_min_r(
   ) :-
     Min = none ; Min = some(0).
 
+%
+% For any defined Min bound above 0 we need to recursivley
+% chain together the AST's machine
+%
 ast_nfa_min_r(
   (Sub_Ast, some(N)),
   (Partial_NFA),
@@ -233,11 +254,20 @@ ast_nfa_min_r(
     (Middle_Used_Until_State, Used_Until_State)
   ).
 
+%
+% This is how we compute the difference between the Min and Max bounds
+% The complexity is that if either bound is none, there is nother to do
+%
 max_diff(none, none, none).
 max_diff(_, none, none).
 max_diff(none, some(N), some(N)).
 max_diff(some(Min), some(Max), some(Diff)) :- Diff is Max - Min.
 
+%
+% If the Max bound is none, then we take the AST's machine
+% and add epsilon transitions from the start to the final state
+% and vice-versa, so that it can be skipped or looped infinitley
+%
 ast_nfa_max(
   (Sub_Ast, none),
   Partial_NFA,
@@ -257,6 +287,11 @@ ast_nfa_max(
   add_nb_set((Start_State, Final_State), NFA_Empty_Transitions),
   add_nb_set((Final_State, Start_State), NFA_Empty_Transitions).
 
+%
+% For a finite Max bound, we recursiveley chain together the AST's machine
+% However, each final state from the machine will have an epsilon transition
+% to the real final state, so that the rest of the chain can be skipped
+%
 ast_nfa_max(
   (Sub_Ast, some(N)),
   Partial_NFA,
@@ -277,6 +312,10 @@ ast_nfa_max(
     (First_A_State, Used_Until_State)
   ).
 
+%
+% The recursive chaining for the Max bound
+% Note that here we declare the Final state
+%
 ast_nfa_max_r(
   (_, 0, _),
   _Partial_NFA,
@@ -302,6 +341,7 @@ ast_nfa_max_r(
 
   add_nb_set((Middle_State, Final_State), NFA_Empty_Transitions),
 
+  % Call recurrence with bound decreased by one
   M is N - 1,
   ast_nfa_max_r(
     (Sub_Ast, M, Final_State),
@@ -309,6 +349,12 @@ ast_nfa_max_r(
     Middle_State,
     (Middle_Used_Until, Used_Until_State)
   ).
+
+
+%
+% The following are helper predicates
+% To format each part of the NFA into its dot representation
+%
 
 state_to_dot(Stream, N) :-
   format(Stream, "\t~w;~n", N).
@@ -341,7 +387,13 @@ final_states_to_dot(Stream, NFA_Final_States) :-
 start_state_to_dot(Stream, N) :-
   format(Stream, "\t~w [shape=box];~n", [N]).
 
-nfa_to_dot(NFA, Stream) :-
+%! nfa_to_dot(+NFA, +Stream) is det.
+%
+% Format the NFA into its dot representation
+%
+% @arg NFA The NFA to format
+% @arg Output_Stream The stream to write the dot representation to
+nfa_to_dot(NFA, Output_Stream) :-
   NFA = (NFA_States, NFA_Transitions, NFA_Empty_Transitions, Start_State, NFA_Final_States),
   writeln(Stream, "digraph NFA {"),
   states_to_dot(Stream, NFA_States),

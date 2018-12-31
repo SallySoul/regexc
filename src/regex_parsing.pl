@@ -101,7 +101,7 @@ parse_regex_strings(
     Regex_Strings,
     ([], false),
     (Asts, Parse_Error_Flag)
-  ),
+  ), !,
 
   handle_asts(Output_Stream, Asts, Ast, Parse_Error_Flag, Error_Found_Flag).
 

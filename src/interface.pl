@@ -119,7 +119,7 @@ write_nfa_dot(Opts, Nfa) :-
 write_nfa_dot(_, _).
 
 main(Args) :-
-  parse_args(Args, (Regex_Strings, Remaining_Opts)),
+  parse_args(Args, (Regex_Strings, Remaining_Opts)), !,
 
   % Parse all the regex strings into Asts,
   % halt if errors are found
@@ -138,9 +138,9 @@ main(Args) :-
   ),
 
   % Create NFA from AST, write to file if requested
-  statemachine:ast_nfa(Ast, Nfa),
-  (write_nfa_dot(Remaining_Opts, Nfa) ;
-  handle_error_flag(true, "Could not transform ast into NFA")).
+  statemachine:ast_nfa(Ast, Nfa) ->
+  write_nfa_dot(Remaining_Opts, Nfa) ;
+  handle_error_flag(true, "Could not transform ast into NFA").
 
 
 
