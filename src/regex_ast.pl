@@ -574,8 +574,6 @@ combined_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
 combined_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
   Next_Ast = ast_or(Current_Ast, Last_Ast).
 
-
-
 :- begin_tests(regex_ast).
 
 % A correct string has a 1-1 relationship with some Ast

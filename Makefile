@@ -1,6 +1,8 @@
 TEMPDIRS = build build/
 
-Distributeable_Path="build/regexc"
+Distributeable_Path=./build/distributeable/regexc
+Static_Documentation_Dir=./build/static_documentation
+Source_Dir=./src
 
 all: .dirFile $(Distributeable_Path)
 
@@ -25,3 +27,12 @@ test:
 doc_server:
 	cd src; swipl -f documentation_server.pl
 
+.PHONY: clean_static_docs
+clean_static_docs:
+	rm -f -r $(Static_Documentation_Server)
+
+.PHONY: static_docs
+static_docs: $(Static_Documentation_Dir)
+
+$(Static_Documentation_Dir): clean_static_docs
+	swipl -f $(Source_Dir)/load.pl -g 'doc_save("$(Source_Dir)", [doc_root("$(Static_Documentation_Dir)"), recursive(true)]), halt(0)'

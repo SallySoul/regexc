@@ -164,6 +164,16 @@ $ make doc_server
 
 This will launch a swipl instance. Use the `halt/0` predicate when you want to stop the server.
 
+To create static documentation use the `static_docs` target int the Makefile.
+
+```
+$ make static_docs
+```
+
+You can open the resulting html document at `./build/static_documentation/index.html`. However, when I make
+the static\_docs this way, the content does not match what I see when running the doc\_server. The static\_docs
+seem to show that only the first predicate in each file is properly documented. I plan on fixing this.
+
 #### Workflow
 
 While working on the source code, I recommend starting a SWI-Prolog session that initializes with
@@ -190,11 +200,14 @@ Here is an example where we parse a string and write the AST's dot representatio
 ?- S = "0x[a-f0-9]+".
 S = "0x[a-f0-9]+".
 
-?- regex_ast:string_ast($S, AST, Errors).
+?- string_ast($S, AST, Errors).
 AST = ast_concat(ast_range(48, 48), ast_concat(ast_range(120, 120), ast_occurance(ast_or(ast_range(97, 102), ast_
 range(48, 57)), some(1), none))),
 Errors = [],
-S = "0x[a-f0-9]+".
+S = "1x[a-f0-9]+".
+
+?- write_to_file(ast_to_dot($AST), "/tmp/ast.dot").
+AST = ast_concat(ast_range(48, 48), ast_concat(ast_range(120, 120), ast_occurance(ast_or(ast_range(97, 102), ast_range(48, 57)), some(1), none))).
 
 ```
 
@@ -224,15 +237,14 @@ swipl -f src/interface.pl -- -r "\d{2,3}"
 
 #### Conventions
 
-There are only a few.
-
 * No trailing whitespace.
 * Please keep one letter variable names to the absolute minimum. I will accept 'C' as a stand-in for
   'Character' for example. 'C1' and 'C2' are probably not a good idea though. Please strive for descriptive
   variable names.
+* Functor and variable names should be composed with '\_'. No Camelcase.
+  - To clarify, Variables will be a bunch of captilized words, `Variable_Name`, and functors will all be lowercase, `functor_name`.
 * If you are adding a new module, please add it to `src/load.pl`. This will, among other things, ensure
   it remains tested.
-* Functor and variable names should be composed with '\_'. No Camelcase.
 
 I would like to have an automatic source formatter in the future.
 
@@ -255,7 +267,7 @@ message and parse the arguments.
 
 SWI Prolog includes a unit test package, [plunit](http://www.swi-prolog.org/pldoc/doc_for?object=section(%27packages/plunit.html%27)).
 
-There are unit tests in every module. In addition, there will be module for defining integration tests.
+There are unit tests in every module. In addition, there will be a module for defining integration tests.
 
 ## Future Work
 
