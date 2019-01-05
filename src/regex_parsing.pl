@@ -48,13 +48,13 @@ format_error(Output_Stream, _Input, error(Message)) :-
 % This is used by parse_regex_strings to both transform the string into an AST,
 % and to handle formatting the errors.
 %
-process_regex_string(Output_Stream, Regex_String, (Asts, Error_Flag), ([Ast | Asts], New_Error_Flag)) :-
-  regex_ast:string_ast(Regex_String, Ast, Errors), !,
+process_regex_string(Output_Stream, Regex_String, (ASTs, Error_Flag), ([AST | ASTs], New_Error_Flag)) :-
+  regex_ast:string_ast(Regex_String, AST, Errors), !,
   handle_parse_errors(Output_Stream, Regex_String, Errors, Error_Flag, New_Error_Flag).
 
 % If regex_ast:string_ast fails, we should catch that here.
 % Note that we don't get an AST here
-process_regex_string(Output_Stream, Regex_String, (Asts, Error_Flag), (Asts, New_Error_Flag)) :-
+process_regex_string(Output_Stream, Regex_String, (ASTs, Error_Flag), (ASTs, New_Error_Flag)) :-
   Errors = [error("Could not parse string", some(0))],
   handle_parse_errors(Output_Stream, Regex_String, Errors, Error_Flag, New_Error_Flag).
 
@@ -75,15 +75,15 @@ handle_parse_errors(Output_Stream, Regex_String, Errors, _Error_Flag, true) :-
 handle_asts(Output_Stream, [], _, _, true) :-
   writeln(Output_Stream, "ERROR: No strings were parsed successfully").
 
-handle_asts(_, Asts, Ast, Error_Flag, Error_Flag) :-
-  regex_ast:combined_asts(Asts, Ast).
+handle_asts(_, ASTs, AST, Error_Flag, Error_Flag) :-
+  regex_ast:combined_asts(ASTs, AST).
 
 
-%! parse_regex_strings(+Output_Stream:stream, +Regex_Strings:list, -Ast, -Error_Found_Flag) is det.
+%! parse_regex_strings(+Output_Stream:stream, +Regex_Strings:list, -AST, -Error_Found_Flag) is det.
 %
 % This is the highest level handle for parsing strings.
 % It takes in a list of strings,
-% transforms them all into one Ast (by OR'ing them together),
+% transforms them all into one AST (by OR'ing them together),
 % and formats the errors into an output_stream.
 %
 % @arg Ouput_Stream Where to write any formatted errors
@@ -93,17 +93,17 @@ handle_asts(_, Asts, Ast, Error_Flag, Error_Flag) :-
 parse_regex_strings(
   Output_Stream,
   Regex_Strings,
-  Ast,
+  AST,
   Error_Found_Flag
 ) :-
   foldl(
     process_regex_string(Output_Stream),
     Regex_Strings,
     ([], false),
-    (Asts, Parse_Error_Flag)
+    (ASTs, Parse_Error_Flag)
   ), !,
 
-  handle_asts(Output_Stream, Asts, Ast, Parse_Error_Flag, Error_Found_Flag).
+  handle_asts(Output_Stream, ASTs, AST, Parse_Error_Flag, Error_Found_Flag).
 
 :- begin_tests(regex_parsing).
 
@@ -157,16 +157,16 @@ test(format_error) :-
     test_format_error(Error, Correct_Output)
   ).
 
-test_parse_regex_strings(Strings, Correct_Output, Correct_Ast, Correct_Error_Flag) :-
+test_parse_regex_strings(Strings, Correct_Output, Correct_AST, Correct_Error_Flag) :-
   with_output_to(string(Output),
       parse_regex_strings(
         current_output,
         Strings,
-        Ast,
+        AST,
         Error_Flag
       )
   ),
-  assertion(Ast = Correct_Ast),
+  assertion(AST = Correct_AST),
   assertion(Error_Flag = Correct_Error_Flag),
   assertion(Output = Correct_Output).
 
@@ -198,8 +198,8 @@ test(parser_regex_strings) :-
       false
     )
   ],
-  forall(member((Strings, Output, Ast, Error_Flag), Inputs),
-    test_parse_regex_strings(Strings, Output, Ast, Error_Flag)
+  forall(member((Strings, Output, AST, Error_Flag), Inputs),
+    test_parse_regex_strings(Strings, Output, AST, Error_Flag)
   ).
 
 :- end_tests(regex_parsing).

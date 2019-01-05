@@ -25,41 +25,41 @@ Its role is to relate strings to (abstract syntax trees, error list) tuples.
 %   @arg Regex This is is the string representation of the regular expression
 %   @arg AST This is the ast_* node representation of the regular expression, modulo errors
 %   @arg Errors List of errors (reasons) why string, root are not the same.
-string_ast(String, Ast, Errors) :-
+string_ast(String, AST, Errors) :-
   % We /* use  */the atom-as-char, let swipl deal with specifics
   % So this takes string, relates it to a list of chars / their positon
   string_chars(String, Chars),
   util:enumeration(Chars, Enumerated_Chars),
 
   % Here we relate the list of chars to the grammer
-  phrase(gram_expr(Ast, Errors), Enumerated_Chars), !.
+  phrase(gram_expr(AST, Errors), Enumerated_Chars), !.
 
 %
 % This is the top level predicate
 %
-gram_expr(Ast_Node, Errors) --> gram_or(Ast_Node, Errors).
+gram_expr(AST_Node, Errors) --> gram_or(AST_Node, Errors).
 
 %
 % We can combine to expressions with logical OR
 %
-gram_or(Ast_Node, Errors) --> gram_concat(Ast_Node, Errors).
-gram_or(ast_or(Ast_Node1, Ast_Node2), All_Errors) -->
-  gram_concat(Ast_Node1, Errors1),
+gram_or(AST_Node, Errors) --> gram_concat(AST_Node, Errors).
+gram_or(ast_or(AST_Node1, AST_Node2), All_Errors) -->
+  gram_concat(AST_Node1, Errors1),
   [('|', _)],
-  gram_or(Ast_Node2, Errors2),
+  gram_or(AST_Node2, Errors2),
   { append(Errors1, Errors2, All_Errors)}.
-gram_or(ast_or(Ast_Node1, ast_error), All_Errors) -->
-  gram_concat(Ast_Node1, Errors),
+gram_or(ast_or(AST_Node1, ast_error), All_Errors) -->
+  gram_concat(AST_Node1, Errors),
   [('|', Pos)],
   { append(Errors, [error("Unexpected OR operator", some(Pos))], All_Errors)}.
 
 %
 % Two expressions can be concatenated together
 %
-gram_concat(Ast_Node, Errors) --> gram_occurance(Ast_Node, Errors).
-gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) -->
-  gram_occurance(Ast_Node1, Errors1),
-  gram_concat(Ast_Node2, Errors2),
+gram_concat(AST_Node, Errors) --> gram_occurance(AST_Node, Errors).
+gram_concat(ast_concat(AST_Node1, AST_Node2), All_Errors) -->
+  gram_occurance(AST_Node1, Errors1),
+  gram_concat(AST_Node2, Errors2),
   { append(Errors1, Errors2, All_Errors)}.
 
 
@@ -71,32 +71,32 @@ gram_concat(ast_concat(Ast_Node1, Ast_Node2), All_Errors) -->
 % There is syntactic sugar for the common cases, like * -> {,},
 % However we also want to able to specify other ranges like {3,6}
 %
-gram_occurance(Final_Ast, Final_Errors) -->
-  gram_single(Start_Ast, Start_Errors),
-  gram_occurance_specifications(Start_Ast, Start_Errors, Final_Ast, Final_Errors).
+gram_occurance(Final_AST, Final_Errors) -->
+  gram_single(Start_AST, Start_Errors),
+  gram_occurance_specifications(Start_AST, Start_Errors, Final_AST, Final_Errors).
 
 %
 % We may want nested occurance spcifications, ie. a{2}{,2}
 % This is where we parse the specifications
 %
-gram_occurance_specifications(Start_Ast, Start_Errors, Final_Ast, Final_Errors) -->
-  gram_occurance_specification(Start_Ast, Start_Errors, Next_Ast, Next_Errors),
-  gram_occurance_specifications(Next_Ast, Next_Errors, Final_Ast, Final_Errors).
+gram_occurance_specifications(Start_AST, Start_Errors, Final_AST, Final_Errors) -->
+  gram_occurance_specification(Start_AST, Start_Errors, Next_AST, Next_Errors),
+  gram_occurance_specifications(Next_AST, Next_Errors, Final_AST, Final_Errors).
 
-gram_occurance_specifications(Next_Ast, Next_Errors, Next_Ast, Next_Errors) --> [].
+gram_occurance_specifications(Next_AST, Next_Errors, Next_AST, Next_Errors) --> [].
 
 %
 % occurance specifications have a few special cases, * + ?
 % They are otherwise specified with {Min,Max} or {Count} notation
 % TODO, we could clean this up a bit
 %
-gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, none, some(1)), Sub_Errors) -->
+gram_occurance_specification(Sub_AST, Sub_Errors, ast_occurance(Sub_AST, none, some(1)), Sub_Errors) -->
   [('?', _)].
-gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, none, none), Sub_Errors) -->
+gram_occurance_specification(Sub_AST, Sub_Errors, ast_occurance(Sub_AST, none, none), Sub_Errors) -->
   [('*', _)].
-gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, some(1), none), Sub_Errors) -->
+gram_occurance_specification(Sub_AST, Sub_Errors, ast_occurance(Sub_AST, some(1), none), Sub_Errors) -->
   [('+', _)].
-gram_occurance_specification(Sub_Ast, Sub_Errors, ast_occurance(Sub_Ast, Min, Max), Final_Errors) -->
+gram_occurance_specification(Sub_AST, Sub_Errors, ast_occurance(Sub_AST, Min, Max), Final_Errors) -->
   [('{', _)],
   gram_occurance_fields(Min, Max, Field_Errors),
   [('}', _)],
@@ -159,23 +159,23 @@ any_char(C, Pos) -->
 % \A => [A-Z]
 % TODO, dunno if I like those leter ranges, seems wrong
 %
-gram_matching_symbol(Ast, []) -->
+gram_matching_symbol(AST, []) -->
   [('d', _)],
   {
     char_code('0', Min_Code),
     char_code('9', Max_Code),
-    Ast = ast_range(Min_Code, Max_Code)
+    AST = ast_range(Min_Code, Max_Code)
   }.
 
-gram_matching_symbol(Ast, []) -->
+gram_matching_symbol(AST, []) -->
   [('D', _)],
   {
     char_code('0', Min_Code),
     char_code('9', Max_Code),
-    Ast = ast_not(ast_range(Min_Code, Max_Code))
+    AST = ast_not(ast_range(Min_Code, Max_Code))
   }.
 
-gram_matching_symbol(Ast, []) -->
+gram_matching_symbol(AST, []) -->
   [('w', _)],
   {
     char_code('a', Lowercase_Min),
@@ -186,7 +186,7 @@ gram_matching_symbol(Ast, []) -->
     char_code('9', Digit_Max),
     char_code('_', Underscore_Code),
     char_code('-', Dash_Code),
-    Ast = ast_or(
+    AST = ast_or(
       ast_range(Lowercase_Min, Lowercase_Max),
       ast_or(
       ast_range(Uppercase_Min, Uppercase_Max),
@@ -198,7 +198,7 @@ gram_matching_symbol(Ast, []) -->
     ))))
   }.
 
-gram_matching_symbol(Ast, []) -->
+gram_matching_symbol(AST, []) -->
   [('W', _)],
   {
     char_code('a', Lowercase_Min),
@@ -209,7 +209,7 @@ gram_matching_symbol(Ast, []) -->
     char_code('9', Digit_Max),
     char_code('_', Underscore_Code),
     char_code('-', Dash_Code),
-    Ast = ast_not(
+    AST = ast_not(
       ast_or(
       ast_range(Lowercase_Min, Lowercase_Max),
       ast_or(
@@ -222,23 +222,23 @@ gram_matching_symbol(Ast, []) -->
     )))))
 }.
 
-gram_matching_symbol(Ast, []) -->
+gram_matching_symbol(AST, []) -->
   [('s', _)],
   {
     char_code(' ', Space_Code),
     char_code('\t', Tab_Code),
-    Ast = ast_or(
+    AST = ast_or(
       ast_range(Space_Code, Space_Code),
       ast_range(Tab_Code, Tab_Code)
     )
   }.
 
-gram_matching_symbol(Ast, []) -->
+gram_matching_symbol(AST, []) -->
   [('s', _)],
   {
     char_code(' ', Space_Code),
     char_code('\t', Tab_Code),
-    Ast = ast_not(
+    AST = ast_not(
       ast_or(
       ast_range(Space_Code, Space_Code),
       ast_range(Tab_Code, Tab_Code)
@@ -286,11 +286,11 @@ gram_operator_symbol(ast_range(Code, Code), []) -->
 % Out side of classes, we must '\' escape control and operator symbols
 % And we can freely use the matching symbols
 %
-gram_special_symbol(Ast, Errors) -->
+gram_special_symbol(AST, Errors) -->
   [('\\', _)],
-  (gram_control_symbol(Ast, Errors) ;
-   gram_operator_symbol(Ast, Errors) ;
-   gram_matching_symbol(Ast, Errors)).
+  (gram_control_symbol(AST, Errors) ;
+   gram_operator_symbol(AST, Errors) ;
+   gram_matching_symbol(AST, Errors)).
 
 gram_special_symbol(ast_error, Errors) -->
   [('\\', Pos)], !,
@@ -304,9 +304,9 @@ gram_special_symbol(ast_error, Errors) -->
 % Since non_range symbols are a super set of range symbols, we
 % cut here if '\' is found
 %
-gram_class_non_range_symbol(Ast, Errors) -->
-  [('\\', _)], !, (gram_control_symbol(Ast, Errors) ;
-   gram_matching_symbol(Ast, Errors)).
+gram_class_non_range_symbol(AST, Errors) -->
+  [('\\', _)], !, (gram_control_symbol(AST, Errors) ;
+   gram_matching_symbol(AST, Errors)).
 
 gram_class_non_range_symbol(ast_error, Errors) -->
   [('\\', Pos)],
@@ -373,19 +373,19 @@ gram_class_range_symbol(Code, []) -->
 % However special characters need to be escaped with a '\..'
 %
 
-gram_class_definition(Ast, Errors) -->
+gram_class_definition(AST, Errors) -->
   [('[', Start_Pos)],
-  maybe_not_class_definition(Start_Pos, Ast, Errors).
+  maybe_not_class_definition(Start_Pos, AST, Errors).
 
-maybe_not_class_definition(Start_Pos, ast_not(Ast), Errors) -->
+maybe_not_class_definition(Start_Pos, ast_not(AST), Errors) -->
   [('^', _)],
-  middle_of_class_definition(Start_Pos, Ast, Errors).
+  middle_of_class_definition(Start_Pos, AST, Errors).
 
-maybe_not_class_definition(Start_Pos, Ast, Errors) -->
-  middle_of_class_definition(Start_Pos, Ast, Errors).
+maybe_not_class_definition(Start_Pos, AST, Errors) -->
+  middle_of_class_definition(Start_Pos, AST, Errors).
 
-middle_of_class_definition(Start_Pos, Ast, Errors) -->
-  gram_class_members(Start_Pos, Ast, Member_Errors),
+middle_of_class_definition(Start_Pos, AST, Errors) -->
+  gram_class_members(Start_Pos, AST, Member_Errors),
   end_of_class_definition(Start_Pos, End_Errors),
   {
     append(Member_Errors, End_Errors, Errors)
@@ -427,22 +427,22 @@ gram_class_member(ast_error, All_Errors) -->
       All_Errors)
   }.
 
-gram_class_member(Ast, Errors) -->
-  gram_class_non_range_symbol(Ast, Errors).
+gram_class_member(AST, Errors) -->
+  gram_class_non_range_symbol(AST, Errors).
 
-maybe_class_members(First_Ast, First_Errors, Ast, Errors) -->
-  gram_class_member(New_Ast, New_Errors),
+maybe_class_members(First_AST, First_Errors, AST, Errors) -->
+  gram_class_member(New_AST, New_Errors),
   {
-    Next_Ast = ast_or(First_Ast, New_Ast),
+    Next_AST = ast_or(First_AST, New_AST),
     append(First_Errors, New_Errors, Next_Errors)
   },
-  maybe_class_members(Next_Ast, Next_Errors, Ast, Errors).
+  maybe_class_members(Next_AST, Next_Errors, AST, Errors).
 
-maybe_class_members(Ast, Errors, Ast, Errors) --> [].
+maybe_class_members(AST, Errors, AST, Errors) --> [].
 
-gram_class_members(_Start_Pos, Ast, Errors) -->
-  gram_class_member(First_Ast, First_Errors),
-  maybe_class_members(First_Ast, First_Errors, Ast, Errors).
+gram_class_members(_Start_Pos, AST, Errors) -->
+  gram_class_member(First_AST, First_Errors),
+  maybe_class_members(First_AST, First_Errors, AST, Errors).
 
 gram_class_members(Start_Pos, ast_error, Errors) -->
   [],
@@ -450,9 +450,9 @@ gram_class_members(Start_Pos, ast_error, Errors) -->
     Errors = [some("No members in class defintions", some(Start_Pos))]
   }.
 
-gram_symbol(Ast, Errors) -->
+gram_symbol(AST, Errors) -->
   [('\\', _)],
-  (gram_matching_symbol(Ast, Errors) ; gram_control_symbol(Ast, Errors) ; gram_operator_symbol(Ast, Errors)).
+  (gram_matching_symbol(AST, Errors) ; gram_control_symbol(AST, Errors) ; gram_operator_symbol(AST, Errors)).
 
 gram_symbol(ast_error, Errors) -->
   [('\\', Pos)],
@@ -481,13 +481,13 @@ gram_symbol(ast_error, Errors) -->
 */
 % TODO catch error
 
-%gram_single(Ast, Errors) --> gram_range_section(Ast, Errors).
-gram_single(Ast, Errors) --> gram_class_definition(Ast, Errors).
+%gram_single(AST, Errors) --> gram_range_section(AST, Errors).
+gram_single(AST, Errors) --> gram_class_definition(AST, Errors).
 gram_single(ast_wildcard, []) --> [ ('.', _) ].
-gram_single(Ast_Node, Errors) --> [('(', _)], gram_expr(Ast_Node, Errors), [(')', _)].
-gram_single(Ast_Node, All_Errors) -->
+gram_single(AST_Node, Errors) --> [('(', _)], gram_expr(AST_Node, Errors), [(')', _)].
+gram_single(AST_Node, All_Errors) -->
   [('(', Pos)],
-  gram_expr(Ast_Node, Errors), ! ,
+  gram_expr(AST_Node, Errors), ! ,
   {
     append(Errors, [error("No closing parenthesis", some(Pos))], All_Errors)
   }.
@@ -496,17 +496,17 @@ gram_single(ast_error, All_Errors) -->
   {
     All_Errors = [error("No closing parenthesis", some(Pos))]
   }.
-gram_single(Ast, Errors) --> gram_symbol(Ast, Errors).
+gram_single(AST, Errors) --> gram_symbol(AST, Errors).
 
-%! ast_to_dot(+Ast, +Stream) is det.
+%! ast_to_dot(+AST, +Stream) is det.
 %
-%   Write the dot representation of the Ast to the specified stream.
+%   Write the dot representation of the AST to the specified stream.
 %
-%   @arg Ast The Ast to write out
+%   @arg AST The AST to write out
 %   @arg Stream The stream to write the dot represenation too
-ast_to_dot(Ast, Stream) :-
+ast_to_dot(AST, Stream) :-
   format(Stream, "digraph AST {~n", []),
-  ast_to_dot_r(Stream, Ast, 0, _),
+  ast_to_dot_r(Stream, AST, 0, _),
   format(Stream, "}~n", []).
 
 ast_to_dot_r(Stream, ast_wildcard, Current_Index, Next_Index) :-
@@ -532,71 +532,71 @@ ast_to_dot_r(Stream, ast_range(Min_Code, Max_Code), Current_Index, Next_Index) :
   char_code(Min, Min_Code), char_code(Max, Max_Code),
   format(Stream, "\t~d [label=\"~d: range(~w - ~w)\"];~n", [Current_Index, Current_Index, Min, Max]).
 
-ast_to_dot_r(Stream, ast_not(Sub_Ast), Current_Index, Next_Index) :-
-  Sub_Ast_Index is Current_Index + 1,
-  ast_to_dot_r(Stream, Sub_Ast, Sub_Ast_Index, Next_Index),
+ast_to_dot_r(Stream, ast_not(Sub_AST), Current_Index, Next_Index) :-
+  Sub_AST_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_AST, Sub_AST_Index, Next_Index),
   format(Stream, "\t~d [label=\"~d: not\"];~n", [Current_Index, Current_Index]),
-  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_Index]).
+  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_AST_Index]).
 
-ast_to_dot_r(Stream, ast_occurance(Sub_Ast, Min, Max), Current_Index, Next_Index) :-
-  Sub_Ast_Index is Current_Index + 1,
-  ast_to_dot_r(Stream, Sub_Ast, Sub_Ast_Index, Next_Index),
+ast_to_dot_r(Stream, ast_occurance(Sub_AST, Min, Max), Current_Index, Next_Index) :-
+  Sub_AST_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_AST, Sub_AST_Index, Next_Index),
   format(Stream, "\t~d [label=\"~d: Occurance, ~w - ~w\"];~n", [Current_Index, Current_Index, Min, Max]),
-  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_Index]).
+  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_AST_Index]).
 
-ast_to_dot_r(Stream, ast_concat(Sub_Ast_L, Sub_Ast_R), Current_Index, Next_Index) :-
-  Sub_Ast_L_Index is Current_Index + 1,
-  ast_to_dot_r(Stream, Sub_Ast_L, Sub_Ast_L_Index, Sub_Ast_R_Index),
-  ast_to_dot_r(Stream, Sub_Ast_R, Sub_Ast_R_Index, Next_Index),
+ast_to_dot_r(Stream, ast_concat(Sub_AST_L, Sub_AST_R), Current_Index, Next_Index) :-
+  Sub_AST_L_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_AST_L, Sub_AST_L_Index, Sub_AST_R_Index),
+  ast_to_dot_r(Stream, Sub_AST_R, Sub_AST_R_Index, Next_Index),
   format(Stream, "\t~d [label=\"~d: Concat\"];~n", [Current_Index, Current_Index]),
-  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_L_Index]),
-  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_R_Index]).
+  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_AST_L_Index]),
+  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_AST_R_Index]).
 
-ast_to_dot_r(Stream, ast_or(Sub_Ast_L, Sub_Ast_R), Current_Index, Next_Index) :-
-  Sub_Ast_L_Index is Current_Index + 1,
-  ast_to_dot_r(Stream, Sub_Ast_L, Sub_Ast_L_Index, Sub_Ast_R_Index),
-  ast_to_dot_r(Stream, Sub_Ast_R, Sub_Ast_R_Index, Next_Index),
+ast_to_dot_r(Stream, ast_or(Sub_AST_L, Sub_AST_R), Current_Index, Next_Index) :-
+  Sub_AST_L_Index is Current_Index + 1,
+  ast_to_dot_r(Stream, Sub_AST_L, Sub_AST_L_Index, Sub_AST_R_Index),
+  ast_to_dot_r(Stream, Sub_AST_R, Sub_AST_R_Index, Next_Index),
   format(Stream, "\t~d [label=\"~d: Or\"];~n", [Current_Index, Current_Index]),
-  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_L_Index]),
-  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_Ast_R_Index]).
+  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_AST_L_Index]),
+  format(Stream, "\t~d -> ~d;~n", [Current_Index, Sub_AST_R_Index]).
 
 
-%! combined_asts(+Asts, -Combined_Ast) is det.
-%! combined_asts(-Asts, +Combined_Ast) is det.
+%! combined_asts(+ASTs, -Combined_AST) is det.
+%! combined_asts(-ASTs, +Combined_AST) is det.
 %
-%   Combined_Ast is Asts combined with logical OR.
+%   Combined_AST is ASTs combined with logical OR.
 %
-%   @arg Asts The list of Asts to combine with logical OR
-%   @arg Combined_Ast The result of combining Asts with logical OR
-combined_asts([First_Ast | Rest_Of_Asts], Combined_Ast) :-
-  foldl(combined_asts_fold, Rest_Of_Asts, First_Ast, Combined_Ast).
+%   @arg ASTs The list of ASTs to combine with logical OR
+%   @arg Combined_AST The result of combining ASTs with logical OR
+combined_asts([First_AST | Rest_Of_ASTs], Combined_AST) :-
+  foldl(combined_asts_fold, Rest_Of_ASTs, First_AST, Combined_AST).
 
-combined_asts_fold(Current_Ast, Last_Ast, Next_Ast) :-
-  Next_Ast = ast_or(Current_Ast, Last_Ast).
+combined_asts_fold(Current_AST, Last_AST, Next_AST) :-
+  Next_AST = ast_or(Current_AST, Last_AST).
 
 :- begin_tests(regex_ast).
 
-% A correct string has a 1-1 relationship with some Ast
-test_correct_string(Correct_String, Ast) :-
-  bagof(Possible_Ast, string_ast(Correct_String, Possible_Ast, Errors), Asts),
-  % There is only one Ast.
+% A correct string has a 1-1 relationship with some AST
+test_correct_string(Correct_String, AST) :-
+  bagof(Possible_AST, string_ast(Correct_String, Possible_AST, Errors), ASTs),
+  % There is only one AST.
   % TODO: I think maybe there shouldn't be any choice points here?
   % I think pltest has the easy facility to test a deterministic function
-  assertion(Asts = [Ast]),
+  assertion(ASTs = [AST]),
 
   % There are no errors
   assertion(Errors = []).
 
 % An incorrection sting will have some ast artifact, and a non-emtpy list of errors.
-test_incorrect_string(Incorrect_String, Ast, Errors) :-
+test_incorrect_string(Incorrect_String, AST, Errors) :-
   bagof(
-    (Possible_Ast, Possible_Errors),
-    string_ast(Incorrect_String, Possible_Ast, Possible_Errors),
+    (Possible_AST, Possible_Errors),
+    string_ast(Incorrect_String, Possible_AST, Possible_Errors),
     Outputs
   ),
   % There should still only be one possible interpretation of the input string.
   % I think.
-  assertion(Outputs = [(Ast, Errors)]).
+  assertion(Outputs = [(AST, Errors)]).
 
 test(correct_strings) :-
   Correct_Strings= [
@@ -719,16 +719,16 @@ test(incorrect_strings) :-
       [error("Unexpected OR operator", some(1))]
     )
   ],
-  forall(member((Incorrect_Input, Matching_Ast, Matching_Errors), Incorrect_Strings),
-    assertion(test_incorrect_string(Incorrect_Input, Matching_Ast, Matching_Errors))
+  forall(member((Incorrect_Input, Matching_AST, Matching_Errors), Incorrect_Strings),
+    assertion(test_incorrect_string(Incorrect_Input, Matching_AST, Matching_Errors))
   ).
 
-test_combined_ast(Asts, Correct_Ast) :-
-  combined_asts(Asts, Ast),
-  assertion(Ast = Correct_Ast).
+test_combined_ast(ASTs, Correct_AST) :-
+  combined_asts(ASTs, AST),
+  assertion(AST = Correct_AST).
 
 test(combined_asts) :-
-  Combined_Asts = [
+  Combined_ASTs = [
     (
       [ast_char(a)],
       ast_char(a)
@@ -742,16 +742,16 @@ test(combined_asts) :-
       ast_or(ast_char(c), ast_or(ast_char(b), ast_char(a)))
     )
   ],
-  forall(member((Asts, Correct_Ast), Combined_Asts),
-    assertion(test_combined_ast(Asts, Correct_Ast))
+  forall(member((ASTs, Correct_AST), Combined_ASTs),
+    assertion(test_combined_ast(ASTs, Correct_AST))
   ).
 
 test_dot_output(String, Correct_Dot_File) :-
-  string_ast(String, Ast, Errors),
+  string_ast(String, AST, Errors),
   assertion(Errors = []),
 
   tmp_file_stream(text, Test_File, TO), close(TO),
-  util:write_to_file(ast_to_dot(Ast), Test_File),
+  util:write_to_file(ast_to_dot(AST), Test_File),
   util:file_diff(Test_File, Correct_Dot_File, Diff),
 
   string_length(Diff, Diff_Length),
