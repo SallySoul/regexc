@@ -40,6 +40,25 @@ contained_in(Sub_Range, Super_Range) :-
   bound_geq(Sub_Min, Super_Min),
   bound_leq(Sub_Max, Super_Max).
 
+%!lower_bounds(+Ranges:list, -Lower_Bounds:list)
+lower_bounds([], []).
+lower_bounds([range(Lower_Bound, _) | Ranges_Tail], [Lower_Bound | Lower_Bounds_Tail]) :-
+  lower_bounds(Ranges_Tail, Lower_Bounds_Tail).
+
+%!lower_bounds(+Ranges:list, -Lower_Bounds:list)
+upper_bounds([], []).
+upper_bounds([range(_, Upper_Bound) | Ranges_Tail], [Upper_Bound | Upper_Bounds_Tail]) :-
+  upper_bounds(Ranges_Tail, Upper_Bounds_Tail).
+
+%! partition_ranges(+Ranges:list, -Partions:list)
+%
+% Take a list of ranges and break it into a non-overlapping partition
+/*
+parition_ranges(Ranges, Partion) :-
+  lower_bounds(Ranges, Lower_Bounds),
+  upper_bounds(Ranges, Upper_Bounds),
+*/
+
 :- begin_tests(regexc_ranges).
 
 test(bound_leq_correct) :-
@@ -56,16 +75,14 @@ test(bound_leq_correct) :-
     assertion(bound_leq(Lesser, Greater))
   ).
 
-/*
 test(bound_leq_incorrect) :-
   Incorrect_Pairs = [
   bound_max - bound_min,
-  bound(20), bound(21)
+  bound(21) - bound(20)
   ],
   forall(member(Lesser-Greater, Incorrect_Pairs),
     assertion(\+(bound_leq(Lesser, Greater)))
   ).
-*/
 
 test(contained_in_correct) :-
   Correct_Pairs = [
@@ -79,7 +96,6 @@ test(contained_in_correct) :-
   forall(member(Sub_Range-Super_Range, Correct_Pairs),
     assertion(contained_in(Sub_Range, Super_Range))).
 
-/*
 test(contained_in_incorrect) :-
   Incorrect_Pairs = [
     range(bound(0), bound(90)) - range(bound(3), bound(7)),
@@ -87,5 +103,5 @@ test(contained_in_incorrect) :-
   ],
   forall(member(Sub_Range-Super_Range, Incorrect_Pairs),
     assertion(\+(contained_in(Sub_Range, Super_Range)))).
-*/
+
 :- end_tests(regexc_ranges).
