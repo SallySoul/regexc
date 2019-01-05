@@ -751,7 +751,8 @@ test_dot_output(String, Correct_Dot_File) :-
   assertion(Errors = []),
 
   tmp_file_stream(text, Test_File, TO), close(TO),
-  write_to_file(ast_to_dot(AST), Test_File),
+  write_to_file_once(ast_to_dot(AST), Test_File, _Deterministic),
+  %assertion(Deterministic = true),
   file_diff(Test_File, Correct_Dot_File, Diff),
 
   string_length(Diff, Diff_Length),

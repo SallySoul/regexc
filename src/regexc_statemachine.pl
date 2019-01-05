@@ -412,7 +412,8 @@ test_dot_output(String, Correct_Dot_File) :-
 	ast_nfa(AST, Nfa),
 
   tmp_file_stream(text, Test_File, TO), close(TO),
-  write_to_file(nfa_to_dot(Nfa), Test_File),
+  write_to_file_once(nfa_to_dot(Nfa), Test_File, Deterministic),
+  assertion(Deterministic = true),
   file_diff(Test_File, Correct_Dot_File, Diff),
 
   string_length(Diff, Diff_Length),

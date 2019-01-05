@@ -1,7 +1,7 @@
 :- module(regexc_utilities,
   [
     enumeration/2,
-    write_to_file/2,
+    write_to_file_once/3,
     file_diff/3
   ]).
 
@@ -21,15 +21,21 @@ enumeration(Ls, Es) :- enumeration_r(Ls, Es, 0).
 enumeration_r([], [], _).
 enumeration_r([L|Ls], [(L, C)|Es], C) :- N is C + 1, enumeration_r(Ls, Es, N).
 
-%! write_to_file(:Goal, +Path) is det.
+%! write_to_file_once(:Goal, +Path, -Deterministic) is det.
 %
 % This predicate will open the file at Path for writing and call Goal with that Output Stream.
 % The Goal should normally be called like `goal(..., Output_Stream)`.
-write_to_file(Goal, Path) :-
-  absolute_file_name(Path, Absolute_Path),
-  open(Absolute_Path, write, File_Output),
-  call(Goal, File_Output), !,
-  close(File_Output).
+%
+% Note that the goal will only be called once, but we return whether the predicate was
+% Deterministic
+write_to_file_once(Goal, Path, Deterministic) :-
+  setup_call_cleanup(
+    open(Path, write, File_Output),
+    once((
+      call(Goal, File_Output),
+      deterministic(Deterministic)
+    )),
+    close(File_Output)).
 
 %! file_diff(+Path_1, +Path_2, -Diff) is det.
 %
