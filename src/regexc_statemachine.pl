@@ -7,7 +7,7 @@
 :- use_module(library(nb_set)).
 :- use_module(regexc_utilities).
 
-/** <module> statemachine
+/** <module> regexc_statemachine
 
 For the purposes of this module, a finite automaton is (Q, T, I, F) where:
 

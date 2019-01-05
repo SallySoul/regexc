@@ -206,7 +206,7 @@ range(48, 57)), some(1), none))),
 Errors = [],
 S = "1x[a-f0-9]+".
 
-?- write_to_file(ast_to_dot($AST), "/tmp/ast.dot").
+?- write_to_file_once(ast_to_dot($AST), "/tmp/ast.dot", _).
 AST = ast_concat(ast_range(48, 48), ast_concat(ast_range(120, 120), ast_occurance(ast_or(ast_range(97, 102), ast_range(48, 57)), some(1), none))).
 
 ```

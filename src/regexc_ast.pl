@@ -7,7 +7,7 @@
 
 :- use_module(regexc_utilities).
 
-/** <module> regex
+/** <module> regexc_ast
 
 This module contains the grammars relating to regular expressions.
 

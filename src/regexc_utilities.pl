@@ -5,7 +5,7 @@
     file_diff/3
   ]).
 
-/** <module> util
+/** <module> regexc_util
 
 This module contains some helpful predicates that can be shared / don't belong anywhere else
 
