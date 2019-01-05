@@ -1,11 +1,11 @@
-:- module(regex_ast,
+:- module(regexc_ast,
   [
     string_ast/3,
     ast_to_dot/2,
     combined_asts/2
   ]).
 
-:- use_module(util).
+:- use_module(regexc_utilities).
 
 /** <module> regex
 
@@ -29,7 +29,7 @@ string_ast(String, AST, Errors) :-
   % We /* use  */the atom-as-char, let swipl deal with specifics
   % So this takes string, relates it to a list of chars / their positon
   string_chars(String, Chars),
-  util:enumeration(Chars, Enumerated_Chars),
+  enumeration(Chars, Enumerated_Chars),
 
   % Here we relate the list of chars to the grammer
   phrase(gram_expr(AST, Errors), Enumerated_Chars), !.
@@ -574,7 +574,7 @@ combined_asts([First_AST | Rest_Of_ASTs], Combined_AST) :-
 combined_asts_fold(Current_AST, Last_AST, Next_AST) :-
   Next_AST = ast_or(Current_AST, Last_AST).
 
-:- begin_tests(regex_ast).
+:- begin_tests(regexc_ast).
 
 % A correct string has a 1-1 relationship with some AST
 test_correct_string(Correct_String, AST) :-
@@ -751,8 +751,8 @@ test_dot_output(String, Correct_Dot_File) :-
   assertion(Errors = []),
 
   tmp_file_stream(text, Test_File, TO), close(TO),
-  util:write_to_file(ast_to_dot(AST), Test_File),
-  util:file_diff(Test_File, Correct_Dot_File, Diff),
+  write_to_file(ast_to_dot(AST), Test_File),
+  file_diff(Test_File, Correct_Dot_File, Diff),
 
   string_length(Diff, Diff_Length),
   assertion(Diff_Length = 0),
@@ -781,4 +781,4 @@ test(ast_to_string) :-
     assertion(test_dot_output(String, Correct_Dot_File))
   ).
 
-:- end_tests(regex_ast).
+:- end_tests(regexc_ast).

@@ -1,10 +1,11 @@
-:- module(statemachine,
+:- module(regexc_statemachine,
   [
     ast_nfa/2,
     nfa_to_dot/2
   ]).
 
 :- use_module(library(nb_set)).
+:- use_module(regexc_utilities).
 
 /** <module> statemachine
 
@@ -403,7 +404,7 @@ nfa_to_dot(NFA, Output_Stream) :-
   start_state_to_dot(Output_Stream, Start_State),
   writeln(Output_Stream, "}").
 
-:- begin_tests(statemachine).
+:- begin_tests(regexc_statemachine).
 
 test_dot_output(String, Correct_Dot_File) :-
   regex_ast:string_ast(String, AST, Errors),
@@ -411,8 +412,8 @@ test_dot_output(String, Correct_Dot_File) :-
 	ast_nfa(AST, Nfa),
 
   tmp_file_stream(text, Test_File, TO), close(TO),
-  util:write_to_file(nfa_to_dot(Nfa), Test_File),
-  util:file_diff(Test_File, Correct_Dot_File, Diff),
+  write_to_file(nfa_to_dot(Nfa), Test_File),
+  file_diff(Test_File, Correct_Dot_File, Diff),
 
   string_length(Diff, Diff_Length),
   assertion(Diff_Length = 0),
@@ -441,4 +442,4 @@ test(ast_to_string) :-
     assertion(test_dot_output(String, Correct_Dot_File))
   ).
 
-:- end_tests(statemachine).
+:- end_tests(regexc_statemachine).

@@ -1,4 +1,4 @@
-:- module(util,
+:- module(regexc_utilities,
   [
     enumeration/2,
     write_to_file/2,
@@ -54,7 +54,7 @@ file_diff(Path_1, Path_2, Diff) :-
   assertion(Status = exit(0)),
   read_string(Diff_Output, _, Diff).
 
-:- begin_tests(util).
+:- begin_tests(regexc_utilities).
 
 test_enumeration(Input, Correct_Output) :-
   enumeration(Input, Output),
@@ -83,4 +83,4 @@ test(enumeration) :-
     assertion(test_enumeration(Input, Correct_Output))
   ).
 
-:- end_tests(util).
+:- end_tests(regexc_utilities).

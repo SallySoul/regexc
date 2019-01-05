@@ -1,5 +1,5 @@
-:- use_module('util').
-:- use_module('regex_ast').
-:- use_module('regex_parsing').
-:- use_module('statemachine').
+:- use_module('regexc_utilities').
+:- use_module('regexc_ast').
+:- use_module('regexc_parsing').
+:- use_module('regexc_statemachine').
 

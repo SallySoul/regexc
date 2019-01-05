@@ -110,12 +110,12 @@ handle_error_flag(false, _Message) :- !.
 
 write_ast_dot(Opts, AST) :-
   member(ast_dot(Path), Opts), atom(Path), !,
-  util:write_to_file(regex:ast_to_dot(AST), Path).
+  write_to_file(regex:ast_to_dot(AST), Path).
 write_ast_dot(_, _).
 
 write_nfa_dot(Opts, Nfa) :-
   member(nfa_dot(Path), Opts), atom(Path), !,
-  util:write_to_file(statemachine:nfa_to_dot(Nfa), Path).
+  write_to_file(statemachine:nfa_to_dot(Nfa), Path).
 write_nfa_dot(_, _).
 
 main(Args) :-
@@ -124,7 +124,7 @@ main(Args) :-
   % Parse all the regex strings into ASTs,
   % halt if errors are found
   % dump
-  regex_parsing:parse_regex_strings(
+  parse_regex_strings(
     user_output,
     Regex_Strings,
     AST,
@@ -138,7 +138,7 @@ main(Args) :-
   ),
 
   % Create NFA from AST, write to file if requested
-  statemachine:ast_nfa(AST, Nfa) ->
+  ast_nfa(AST, Nfa) ->
   write_nfa_dot(Remaining_Opts, Nfa) ;
   handle_error_flag(true, "Could not transform ast into NFA").
 

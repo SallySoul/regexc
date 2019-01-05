@@ -1,4 +1,4 @@
-:- module(regex_parsing,
+:- module(regexc_parsing,
   [
     parse_regex_strings/4,
     format_errors/3,
@@ -7,7 +7,7 @@
   ]
 ).
 
-:- use_module(regex_ast).
+:- use_module(regexc_ast).
 
 %! format_errors(+Output_Stream:stream, +Input:string, +Errors:list) is det.
 %
@@ -105,7 +105,7 @@ parse_regex_strings(
 
   handle_asts(Output_Stream, ASTs, AST, Parse_Error_Flag, Error_Found_Flag).
 
-:- begin_tests(regex_parsing).
+:- begin_tests(regexc_parsing).
 
 test_write_single_arrow(Num, Correct_Arrow) :-
   with_output_to(string(Arrow),
@@ -202,4 +202,4 @@ test(parser_regex_strings) :-
     test_parse_regex_strings(Strings, Output, AST, Error_Flag)
   ).
 
-:- end_tests(regex_parsing).
+:- end_tests(regexc_parsing).
