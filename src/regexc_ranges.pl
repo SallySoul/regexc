@@ -40,6 +40,13 @@ contained_in(Sub_Range, Super_Range) :-
   bound_geq(Sub_Min, Super_Min),
   bound_leq(Sub_Max, Super_Max).
 
+overlaps(Left_Rane, Right_Range) :-
+  Left_Range = range(Left_Lower, Left_Upper),
+  Right_Range = range(Right_Lower, Right_Upper),
+  bound_leq(Left_Lower, Right_Lower),
+  bound_leq(Left_Upper, Right_Upper),
+  bound_geq(Left_Upper, Right_Lower).
+
 %!lower_bounds(+Ranges:list, -Lower_Bounds:list)
 lower_bounds([], []).
 lower_bounds([range(Lower_Bound, _) | Ranges_Tail], [Lower_Bound | Lower_Bounds_Tail]) :-
@@ -50,15 +57,18 @@ upper_bounds([], []).
 upper_bounds([range(_, Upper_Bound) | Ranges_Tail], [Upper_Bound | Upper_Bounds_Tail]) :-
   upper_bounds(Ranges_Tail, Upper_Bounds_Tail).
 
+all_bounds([], []).
+all_bounds([range(Upper_Bound, Lower_Bound) | Ranges_Tail], [Upper_Bound, Lower_Bound | Bounds_Tail]) :-
+  all_bounds(Ranges_Tail, Bounds_Tail).
+
 %! partition_ranges(+Ranges:list, -Partions:list)
 %
 % Take a list of ranges and break it into a non-overlapping partition
 /*
-parition_ranges(Ranges, Partion) :-
+parition_ranges(Ranges, _Partion) :-
   lower_bounds(Ranges, Lower_Bounds),
-  upper_bounds(Ranges, Upper_Bounds),
+  upper_bounds(Ranges, Upper_Bounds).
 */
-
 :- begin_tests(regexc_ranges).
 
 test(bound_leq_correct) :-

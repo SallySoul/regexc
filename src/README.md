@@ -1,25 +1,37 @@
 # regexc Documentation
 
-These are the modules loaded by the documentation server.
+## Infrastructure Files
+
+These files are infrastructure that support the rest of the project, but aren't strictly speaking
+part of the shipped code.
 
 ### load.pl
 
-  This is a standard prolog file allows one to use all the libraries with only one statement.
+  This is a standard prolog file that can be used to initialize the prolog environment.
+  in out case this means loading all the regexc modules.
+
+### documentation_server.pl
+
+  This file is run by the `doc_server` target in the Makefile.
+
+## Source Files
+
+  These files are all modules that contain the logic of regexc.
 
 ### regexc_ast.pl
 
-  This is where the grammer for relating regular expressions to Abstract syntax trees lives. 
+  This is where the grammer for relating regular expressions to Abstract syntax trees lives.
   This module exports a string_ast relation and a couple other utilities for deal with ASTs.
 
 ### regexc_parsing.pl
 
-  This module has the support utilities for the interface to call regex_ast. That includes 
+  This module has the support utilities for the interface to call regex_ast. That includes
   predicates for printing errors, handling a list of regular expressions, and combining the
   results of parsing them.
 
 ### regexc_statemachine.pl
 
-  This module deals with NFAs and DFAs. It also exports the routine for converting ASTs into 
+  This module deals with NFAs and DFAs. It also exports the routine for converting ASTs into
   NFAs.
 
 ### regexc_ranges.pl
@@ -31,9 +43,9 @@ These are the modules loaded by the documentation server.
 
   This module contains some generic helper functions.
 
-### documentation_server.pl
+### _Other Source Files_
 
-  This file is run by the `doc_server` target in the Makefile.
+#### interface.pl
 
-In addition, there is the `interface.pl`, however this contains the main entry point 
-so it is not loaded by the doc server (for now).
+  This contains the optparse application as well as the main entry point for the regexc distributable.
+  This file should problably get broken up for testability.

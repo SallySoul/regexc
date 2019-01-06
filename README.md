@@ -320,3 +320,6 @@ that problem space.
 
 This stackoverflow question got me on the right track for handling character ranges.
 [How to implement regular expression NFA with character ranges?](https://stackoverflow.com/questions/20767047/how-to-implement-regular-expression-nfa-with-character-ranges)
+
+This helped me understand unicode in a way I hadn't before.
+[What Every Programmer Absolutely, Positively Needs To Know About Encodings And Character Sets To Work With Text](http://kunststube.net/encoding/)
